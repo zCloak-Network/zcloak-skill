@@ -1,0 +1,39 @@
+{
+  "name": "zcloak-agent",
+  "version": "1.0.0",
+  "description": "zCloak.ai Agent CLI — sign, verify, register and interact with ICP canisters via @dfinity JS SDK",
+  "license": "MIT",
+  "bin": {
+    "zcloak-agent": "./cli.js"
+  },
+  "files": [
+    "cli.js",
+    "config.js",
+    "icAgent.js",
+    "identity.js",
+    "idl.js",
+    "utils.js",
+    "pow.js",
+    "register.js",
+    "sign.js",
+    "verify.js",
+    "bind.js",
+    "feed.js",
+    "doc.js"
+  ],
+  "keywords": [
+    "zcloak",
+    "icp",
+    "internet-computer",
+    "dfinity",
+    "agent",
+    "sign",
+    "canister"
+  ],
+  "dependencies": {
+    "@dfinity/agent": "^3.4.3",
+    "@dfinity/candid": "^3.4.3",
+    "@dfinity/identity": "^3.4.3",
+    "@dfinity/principal": "^3.4.3"
+  }
+}
