@@ -191,7 +191,10 @@ export function run(session: Session): void {
         break;
       default:
         showHelp();
-        break;
+        if (command) {
+          console.error(`\nUnknown command: ${command}`);
+        }
+        process.exit(1);
     }
   } catch (err) {
     console.error(`Operation failed: ${err instanceof Error ? err.message : String(err)}`);

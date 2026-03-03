@@ -80,7 +80,10 @@ export async function run(session: Session): Promise<void> {
         break;
       default:
         showHelp();
-        break;
+        if (command) {
+          console.error(`\nUnknown command: ${command}`);
+        }
+        process.exit(1);
     }
   } catch (err) {
     console.error(`Operation failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -92,5 +95,8 @@ export async function run(session: Session): Promise<void> {
 
 if (require.main === module) {
   const session = new Session(process.argv);
-  run(session);
+  run(session).catch((err: unknown) => {
+    console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
+    process.exit(1);
+  });
 }

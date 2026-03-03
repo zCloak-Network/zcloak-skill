@@ -27,8 +27,11 @@ export { getEnv, getCanisterIds, getEnvLabel };
  * @param base - Base string (usually the latest sign event id)
  * @param zeros - Number of leading zeros, defaults to config.pow_zeros
  */
+/** Default PoW timeout in milliseconds (5 minutes) — prevents runaway CPU usage */
+const POW_TIMEOUT_MS = 5 * 60 * 1000;
+
 export function computePow(base: string, zeros?: number): PowResult {
-  const effectiveZeros = zeros || config.pow_zeros;
+  const effectiveZeros = zeros ?? config.pow_zeros;
   const prefix = '0'.repeat(effectiveZeros);
   const start = Date.now();
   let nonce = 0;
@@ -41,6 +44,18 @@ export function computePow(base: string, zeros?: number): PowResult {
       return { nonce, hash, timeMs };
     }
     nonce++;
+
+    // Check timeout every 10000 iterations to avoid excessive Date.now() calls
+    if (nonce % 10000 === 0) {
+      const elapsed = Date.now() - start;
+      if (elapsed > POW_TIMEOUT_MS) {
+        throw new Error(
+          `PoW computation timed out after ${Math.round(elapsed / 1000)}s ` +
+          `(${nonce} hashes tried, zeros=${effectiveZeros}). ` +
+          `Consider reducing the zeros parameter.`
+        );
+      }
+    }
   }
 }
 

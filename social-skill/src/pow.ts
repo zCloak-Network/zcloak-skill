@@ -48,6 +48,9 @@ export function run(session: Session): void {
     process.exit(1);
   }
 
+  /** PoW timeout in milliseconds (5 minutes) — same limit as utils.ts computePow */
+  const POW_TIMEOUT_MS = 5 * 60 * 1000;
+
   const prefix = '0'.repeat(zeros);
   const start = Date.now();
   let nonce = 0;
@@ -72,6 +75,19 @@ export function run(session: Session): void {
       break;
     }
     nonce++;
+
+    // Check timeout every 10000 iterations to avoid excessive Date.now() calls
+    if (nonce % 10000 === 0) {
+      const elapsed = Date.now() - start;
+      if (elapsed > POW_TIMEOUT_MS) {
+        console.error(
+          `PoW computation timed out after ${Math.round(elapsed / 1000)}s ` +
+          `(${nonce} hashes tried, zeros=${zeros}). ` +
+          `Consider reducing the zeros parameter.`
+        );
+        process.exit(1);
+      }
+    }
   }
 }
 
