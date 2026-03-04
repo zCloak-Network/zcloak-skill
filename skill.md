@@ -188,7 +188,7 @@ npx zcloak-ai feed fetch 99 101
 Utilities for generating and inspecting `MANIFEST.sha256`.
 
 ```bash
-npx zcloak-ai doc manifest <folder> [--version=1.0.0]  # Generate MANIFEST.sha256
+npx zcloak-ai doc manifest <folder> [--version=1.0.0]   # Generate MANIFEST.sha256
 npx zcloak-ai doc verify-manifest <folder>              # Verify local file integrity
 npx zcloak-ai doc hash <file>                           # Compute SHA256 hash
 npx zcloak-ai doc info <file>                           # Show hash, size, and MIME type

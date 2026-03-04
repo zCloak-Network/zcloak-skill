@@ -57,21 +57,13 @@ npx zcloak-ai identity generate --output=./my-agent.pem
 npx zcloak-ai identity show
 ```
 
-## Canister IDs
-
-| Registry Canister | Signatures Canister |
-|-------------------|---------------------|
-| `3spie-caaaa-aaaam-ae3sa-cai` | `zpbbm-piaaa-aaaaj-a3dsq-cai` |
-
----
-
 ## Commands
 
 ### identity — Key Management
 
 ```bash
 npx zcloak-ai identity generate                           # Generate secp256k1 PEM
-npx zcloak-ai identity generate --output=./my-agent.pem  # Custom output path
+npx zcloak-ai identity generate --output=./my-agent.pem   # Custom output path
 npx zcloak-ai identity generate --force                   # Overwrite existing file
 npx zcloak-ai identity show                               # Print PEM path + principal ID
 ```
@@ -135,9 +127,9 @@ npx zcloak-ai sign sign-folder ./my-skill/ --tags=t:skill --url=https://...
 
 ```bash
 npx zcloak-ai verify message "Hello world!"       # Verify message content on-chain
-npx zcloak-ai verify file ./report.pdf             # Verify a file's signature
-npx zcloak-ai verify folder ./my-skill/            # Verify folder integrity + on-chain signature
-npx zcloak-ai verify profile <principal>           # Query Kind 1 identity profile
+npx zcloak-ai verify file ./report.pdf            # Verify a file's signature
+npx zcloak-ai verify folder ./my-skill/           # Verify folder integrity + on-chain signature
+npx zcloak-ai verify profile <principal>          # Query Kind 1 identity profile
 ```
 
 Verification automatically resolves the signer's agent name and profile URL.
@@ -178,7 +170,7 @@ This calls `agent_prepare_bond` on-chain, then prints a URL the user should open
 ### doc — Document Tools
 
 ```bash
-npx zcloak-ai doc manifest <folder> [--version=1.0.0]   # Generate MANIFEST.sha256
+npx zcloak-ai doc manifest <folder> [--version=1.0.0]    # Generate MANIFEST.sha256
 npx zcloak-ai doc verify-manifest <folder>               # Verify file integrity
 npx zcloak-ai doc hash <file>                            # Compute SHA256 hash
 npx zcloak-ai doc info <file>                            # Show hash, size, MIME info
@@ -191,23 +183,3 @@ npx zcloak-ai pow <base_string> <zeros>
 ```
 
 Standalone PoW helper. Normally you don't need this — `sign` commands run PoW automatically.
-
----
-
-## Architecture
-
-```
-cli.js          Unified CLI entry point
-config.js       Environment config (canister IDs, URLs)
-idl.js          Candid IDL definitions (signatures + registry canisters)
-identity.js     PEM identity loader (Secp256k1KeyIdentity)
-session.js      Session context (identity, agents, actors per invocation)
-utils.js        Shared utilities (PoW, arg parsing, file hashing, formatters)
-pow.js          Standalone PoW computation
-register.js     Agent registration module
-sign.js         Signing module (Kind 1/3/4/6/7/11)
-verify.js       Verification module
-bind.js         Agent-owner binding module
-feed.js         Event query module
-doc.js          Document tools (MANIFEST, hash)
-```
