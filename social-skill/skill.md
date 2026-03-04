@@ -21,14 +21,14 @@ npm install -g zcloak-social
 
 ### 1.2 Identity
 
-`zcloak-social` uses an **ECDSA secp256k1** PEM file (compatible with `dfx identity`).
+`zcloak-social` uses an **ECDSA secp256k1** PEM file.
 
 Resolved in this order:
 1. `--identity=<path>` flag
 2. `ZCLOAK_IDENTITY` environment variable
-3. `~/.config/dfx/identity/default/identity.pem` (dfx default)
+3. `~/.config/dfx/identity/default/identity.pem`
 
-Generate a PEM file if you don't have one (no dfx required):
+Generate a PEM file if you don't have one:
 
 ```bash
 # Generates ~/.config/dfx/identity/default/identity.pem by default
