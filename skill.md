@@ -11,17 +11,12 @@ With this skill, an AI agent can:
 - **Delete** files with 2FA (passkey) verification
 - **Encrypt/Decrypt** files and data using ICP VetKey (IBE + AES-256-GCM daemon mode)
 
----
-
 ## 1. Setup
 
 ### 1.1 Install
 
 ```bash
-# Clone the repository
 git clone git@github.com:zCloak-Network/zcloak-skill.git
-
-# Install dependencies
 cd zcloak-skill
 npm install
 ```
@@ -51,8 +46,6 @@ npx zcloak-ai identity generate
 npx zcloak-ai identity generate --output=./my-agent.pem
 ```
 
----
-
 ## 2. Register — Agent Name Management
 
 An agent name (e.g. `my-agent#1234.agent`) makes your principal ID discoverable by others. Registration is optional but recommended.
@@ -75,8 +68,6 @@ npx zcloak-ai register lookup-by-principal <principal>
 # Query an agent's owner bindings
 npx zcloak-ai register get-owner <principal_or_agent_name>
 ```
-
----
 
 ## 3. Sign — On-chain Signing
 
@@ -150,8 +141,6 @@ npx zcloak-ai sign sign-file ./report.pdf --tags=t:document
 npx zcloak-ai sign sign-folder ./my-skill/ --tags=t:skill --url=https://example.com/skill
 ```
 
----
-
 ## 4. Verify — Signature Verification
 
 Verification automatically resolves the signer's agent name and outputs a profile URL.
@@ -170,8 +159,6 @@ npx zcloak-ai verify folder ./my-skill/
 npx zcloak-ai verify profile <principal>
 ```
 
----
-
 ## 5. Feed — Event History
 
 ```bash
@@ -183,8 +170,6 @@ npx zcloak-ai feed counter
 npx zcloak-ai feed fetch 99 101
 ```
 
----
-
 ## 6. Doc — Document Tools
 
 Utilities for generating and inspecting `MANIFEST.sha256`.
@@ -195,8 +180,6 @@ npx zcloak-ai doc verify-manifest <folder>              # Verify local file inte
 npx zcloak-ai doc hash <file>                           # Compute SHA256 hash
 npx zcloak-ai doc info <file>                           # Show hash, size, and MIME type
 ```
-
----
 
 ## 7. Bind — Agent-Owner Binding
 
@@ -231,8 +214,6 @@ npx zcloak-ai bind prepare <user_principal>
 npx zcloak-ai register get-owner <agent_principal>
 # => connection_list shows the bound owner principal(s)
 ```
-
----
 
 ## 8. Delete — File Deletion with 2FA Verification
 
@@ -298,8 +279,6 @@ npx zcloak-ai delete prepare ./report.pdf
 # Step 3: Confirm and delete
 npx zcloak-ai delete confirm "<challenge>" ./report.pdf
 ```
-
----
 
 ## 9. VetKey — Encryption & Decryption
 
@@ -449,8 +428,6 @@ Without `nohup` or a process manager, the daemon will be killed by SIGHUP when t
 - Daemon encrypted files use VKDA format: `[magic "VKDA"][version][nonce][ciphertext+GCM tag]`
 - Maximum file size: 1 GB
 - VetKey uses BLS12-381 — key derivation via ICP consensus (no single point of trust)
-
----
 
 ## 10. Global Options
 
