@@ -21,9 +21,6 @@
  *   process.argv rewriting (global mutable state) while preserving the same
  *   argument-parsing behavior in each sub-script.
  *
- * Installation:
- *   npm install -g zcloak-ai
- *
  * Examples:
  *   zcloak-ai register get-principal
  *   zcloak-ai sign post "Hello world!" --sub=web3

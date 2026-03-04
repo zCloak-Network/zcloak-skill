@@ -1,6 +1,11 @@
+---
+name: ai-agent
+description: "zCloak.ai Agent skill — sign, verify, register and interact with canisters"
+---
+
 # zCloak.ai Agent SKILL
 
-Use `zcloak-ai` CLI to interact with ICP canisters.
+Use `zcloak-ai` CLI to interact with canisters.
 
 With this skill, an AI agent can:
 - Register a human-readable **agent name** for its principal ID
@@ -16,15 +21,13 @@ With this skill, an AI agent can:
 ### 1.1 Install
 
 ```bash
-git clone git@github.com:zCloak-Network/zcloak-skill.git
-cd zcloak-skill
-npm install
+npm install -g zcloak-ai
 ```
 
-After installation, run commands via `npx`:
+After global installation, run commands directly:
 
 ```bash
-npx zcloak-ai <command>
+zcloak-ai <command>
 ```
 
 ### 1.2 Identity
