@@ -48,7 +48,12 @@ export function buildSignTypes(I: typeof IDL) {
     Kind2IdentityVerification: I.Record({ content: I.Text, tags: I.Opt(I.Vec(I.Vec(I.Text))) }),
     Kind3SimpleAgreement: I.Record({ content: I.Text, tags: I.Opt(I.Vec(I.Vec(I.Text))) }),
     Kind4PublicPost: I.Record({ content: I.Text, tags: I.Opt(I.Vec(I.Vec(I.Text))) }),
-    Kind5PrivatePost: I.Record({ content: I.Text, tags: I.Opt(I.Vec(I.Vec(I.Text))) }),
+    // Kind5 uses VetKey IBE encryption: encrypted_content (bytes) + ibe_identity
+    Kind5PrivatePost: I.Record({
+      encrypted_content: I.Vec(I.Nat8),
+      ibe_identity: I.Text,
+      tags: I.Opt(I.Vec(I.Vec(I.Text))),
+    }),
     Kind6Interaction: I.Record({ content: I.Text, tags: I.Opt(I.Vec(I.Vec(I.Text))) }),
     Kind7ContactList: I.Record({ tags: I.Opt(I.Vec(I.Vec(I.Text))) }),
     Kind8MediaAsset: I.Record({ content: I.Text, tags: I.Opt(I.Vec(I.Vec(I.Text))) }),
@@ -61,7 +66,14 @@ export function buildSignTypes(I: typeof IDL) {
     Kind15GeneralAttestation: I.Record({ content: I.Text, tags: I.Opt(I.Vec(I.Vec(I.Text))) }),
   });
 
-  return { SignEvent, SignParm };
+  /** DecryptionPackage record — returned by get_kind5_decryption_key */
+  const DecryptionPackage = I.Record({
+    encrypted_key: I.Vec(I.Nat8),    // Transport-encrypted VetKey (192 bytes)
+    ciphertext: I.Vec(I.Nat8),       // IBE ciphertext
+    ibe_identity: I.Text,            // IBE identity string
+  });
+
+  return { SignEvent, SignParm, DecryptionPackage };
 }
 
 /**
@@ -75,7 +87,7 @@ export function buildSignService(
   I: typeof IDL,
   types: ReturnType<typeof buildSignTypes>,
 ) {
-  const { SignEvent, SignParm } = types;
+  const { SignEvent, SignParm, DecryptionPackage } = types;
 
   return I.Service({
     // ===== Signing operations (update call, requires identity) =====
@@ -92,6 +104,25 @@ export function buildSignService(
 
     // mcp_sign: MCP proxy signing
     mcp_sign: I.Func([I.Principal, SignParm], [SignEvent], []),
+
+    // ===== VetKey operations (update call, requires identity) =====
+
+    // Get IBE derived public key (96 bytes, compressed G2 point)
+    get_ibe_public_key: I.Func([], [I.Vec(I.Nat8)], []),
+
+    // Get Kind5 decryption package (encrypted VetKey + ciphertext + identity)
+    get_kind5_decryption_key: I.Func(
+      [I.Text, I.Vec(I.Nat8)],
+      [DecryptionPackage],
+      [],
+    ),
+
+    // Derive VetKey for daemon mode AES-256 key derivation
+    derive_vetkey: I.Func(
+      [I.Text, I.Vec(I.Nat8)],
+      [I.Vec(I.Nat8)],
+      [],
+    ),
 
     // ===== Query operations (query, can be anonymous) =====
 

@@ -3,7 +3,7 @@
  *
  * Run `npm run generate-types` to regenerate this file.
  * Source: signIdlFactory in src/idl.ts
- * Generated: 2026-03-04T05:23:08.289Z
+ * Generated: 2026-03-04T06:08:56.790Z
  *
  * These types are derived from the Candid IDL definitions and correspond to
  * the canister's runtime interface. Edit idl.ts to change type definitions.
@@ -45,7 +45,8 @@ export type SignParm =
   content: string;
 } }
   | { Kind5PrivatePost: {
-  content: string;
+  ibe_identity: string;
+  encrypted_content: number[];
   tags: CandidOpt<string[][]>;
 } }
   | { Kind8MediaAsset: {
@@ -97,11 +98,18 @@ export type SignResult = AgentSignResult;
 /** Signatures canister service interface — all callable canister methods */
 export interface SignService {
   agent_sign: ActorMethod<[SignParm, string], AgentSignResult>;
+  derive_vetkey: ActorMethod<[string, number[]], number[]>;
   fetch_events_by_counter: ActorMethod<[number, number], SignEvent[]>;
   fetch_user_sign: ActorMethod<[Principal, number, number], [number, SignEvent[]]>;
   get_all_sign_events: ActorMethod<[], SignEvent[]>;
   get_counter: ActorMethod<[], number>;
+  get_ibe_public_key: ActorMethod<[], number[]>;
   get_kind1_event_by_principal: ActorMethod<[string], CandidOpt<SignEvent>>;
+  get_kind5_decryption_key: ActorMethod<[string, number[]], {
+  encrypted_key: number[];
+  ciphertext: number[];
+  ibe_identity: string;
+}>;
   get_sign_event_by_id: ActorMethod<[string], CandidOpt<SignEvent>>;
   get_user_latest_sign_event_id: ActorMethod<[Principal], string>;
   greet: ActorMethod<[string], string>;

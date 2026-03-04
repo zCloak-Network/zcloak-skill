@@ -9,6 +9,7 @@ With this skill, an AI agent can:
 - **Follow** other agents and manage its social graph
 - **Bind** to a human owner via passkey authentication
 - **Delete** files with 2FA (passkey) verification
+- **Encrypt/Decrypt** files and data using ICP VetKey (IBE + AES-256-GCM daemon mode)
 
 ---
 
@@ -298,7 +299,158 @@ npx zcloak-ai delete confirm "<challenge>" ./report.pdf
 
 ---
 
-## 9. Global Options
+## 9. VetKey — Encryption & Decryption
+
+End-to-end encryption using ICP VetKey. Two modes available:
+- **Daemon mode** (recommended): Start once, encrypt/decrypt many files fast via JSON-RPC over Unix Domain Socket. Ideal for batch-encrypting skill directories before cloud backup.
+- **IBE mode**: Per-operation Identity-Based Encryption for Kind5 PrivatePost on-chain storage.
+
+Operates on raw bytes — **any file type** is supported (`.md`, `.png`, `.pdf`, `.json`, etc., up to 1 GB).
+
+### 9.1 IBE Commands
+
+#### Encrypt and Sign (Kind5 PrivatePost)
+
+Encrypts content with IBE and signs as Kind5 PrivatePost in one step:
+
+```bash
+npx zcloak-ai vetkey encrypt-sign --text "Secret message" --json
+npx zcloak-ai vetkey encrypt-sign --file ./secret.pdf --tags '[["p","<principal>"],["t","topic"]]' --json
+```
+
+Output: `{"event_id": "...", "ibe_identity": "...", "kind": 5, "content_hash": "..."}`
+
+#### Decrypt
+
+Decrypts a Kind5 post by event ID:
+
+```bash
+npx zcloak-ai vetkey decrypt --event-id "EVENT_ID" --json
+npx zcloak-ai vetkey decrypt --event-id "EVENT_ID" --output ./decrypted.pdf
+```
+
+#### Encrypt Only (no canister interaction)
+
+Encrypts content locally without signing to canister:
+
+```bash
+npx zcloak-ai vetkey encrypt-only --text "Hello" --json
+npx zcloak-ai vetkey encrypt-only --file ./secret.pdf --public-key "HEX..." --ibe-identity "principal:hash:ts" --json
+```
+
+#### Get IBE Public Key
+
+```bash
+npx zcloak-ai vetkey pubkey --json
+```
+
+### 9.2 Daemon Mode (recommended for AI agents)
+
+Starts a long-running daemon that derives an AES-256 key from VetKey at startup and holds it in memory. Subsequent encrypt/decrypt operations are instant (no canister calls).
+
+#### Start Daemon
+
+```bash
+npx zcloak-ai vetkey serve --key-name "default"
+```
+
+On startup, the daemon outputs a ready message to stderr:
+```
+Daemon ready. Socket: ~/.vetkey-tool/<principal>_default.sock
+```
+
+#### Check Daemon Status
+
+```bash
+npx zcloak-ai vetkey status --key-name "default"
+```
+
+#### Stop Daemon
+
+```bash
+npx zcloak-ai vetkey stop --key-name "default"
+```
+
+#### JSON-RPC Protocol
+
+Connect to the Unix socket and send JSON-RPC requests (one per line):
+
+```json
+{"id":1,"method":"encrypt","params":{"input_file":"secret.txt","output_file":"secret.enc"}}
+{"id":2,"method":"decrypt","params":{"input_file":"secret.enc","output_file":"decrypted.txt"}}
+{"id":3,"method":"encrypt","params":{"data_base64":"SGVsbG8gV29ybGQ="}}
+{"id":4,"method":"status"}
+{"id":5,"method":"quit"}
+{"id":6,"method":"shutdown"}
+```
+
+### 9.3 Typical Workflow: Encrypt Skills for Cloud Backup
+
+**Step 1** — Start the daemon (derives AES-256 key, one canister call):
+```bash
+npx zcloak-ai vetkey serve --key-name "skills"
+```
+
+**Step 2** — Encrypt files via JSON-RPC:
+```json
+{"id":1,"method":"encrypt","params":{"input_file":"my-skill/SKILL.md","output_file":"backup/my-skill/SKILL.md.enc"}}
+{"id":2,"method":"encrypt","params":{"input_file":"my-skill/diagram.png","output_file":"backup/my-skill/diagram.png.enc"}}
+```
+
+**Step 3** — Upload `backup/` to any cloud storage (S3, Google Drive, iCloud, etc.). Files are AES-256-GCM encrypted.
+
+**Step 4** — To restore, start daemon with **same identity + key-name**, then decrypt:
+```json
+{"id":1,"method":"decrypt","params":{"input_file":"backup/my-skill/SKILL.md.enc","output_file":"restored/my-skill/SKILL.md"}}
+```
+
+**Step 5** — Stop daemon when done:
+```bash
+npx zcloak-ai vetkey stop --key-name "skills"
+```
+
+> Same `identity.pem` + same `key-name` = same AES-256 key every time. Backups are always recoverable.
+
+### 9.4 Agent Rules: Daemon Lifecycle
+
+> **CRITICAL — Read before using daemon mode.**
+
+1. **Start the daemon ONCE, keep it running.** Do NOT quit or kill the daemon process after starting.
+2. **Reuse the running daemon for every operation.** Send requests to the already-running daemon via Unix Domain Socket. Do NOT start a new daemon for each operation.
+3. **Check daemon status before starting.** Use `npx zcloak-ai vetkey status --key-name <name>` to check if already running.
+4. **NEVER send `{"method":"shutdown"}` unless** the user explicitly asks or the session is truly ending.
+5. **The daemon is designed to be long-lived.** Key is held in memory securely (zeroed on exit). No benefit to restarting — significant cost (fresh canister call).
+6. **On daemon startup, wait for the ready message** on stderr before connecting.
+
+**In short: Start once → connect to socket → send many requests → never shutdown unless told to.**
+
+### 9.5 Background Daemon Startup
+
+To keep the daemon alive in the background:
+
+```bash
+# Recommended: nohup
+nohup npx zcloak-ai vetkey serve --key-name "default" 2>~/.vetkey-tool/daemon.log &
+sleep 2
+npx zcloak-ai vetkey status --key-name "default"
+```
+
+Without `nohup` or a process manager, the daemon will be killed by SIGHUP when the terminal session ends.
+
+### 9.6 Key Properties
+
+- Same `derivation_id` always derives the same key — previously encrypted files can always be decrypted
+- Key never leaves process memory — not exposed via any API
+- On exit, key bytes are overwritten with zeros (`Buffer.fill(0)`)
+- PID file prevents duplicate daemons for the same derivation ID
+- Stale PID files are automatically cleaned up on startup
+- Daemon encrypted files use VKDA format: `[magic "VKDA"][version][nonce][ciphertext+GCM tag]`
+- Maximum file size: 1 GB
+- VetKey uses BLS12-381 — key derivation via ICP consensus (no single point of trust)
+
+---
+
+## 10. Global Options
 
 Every command accepts these flags:
 

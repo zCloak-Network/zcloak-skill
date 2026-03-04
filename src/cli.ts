@@ -13,6 +13,7 @@
  *   zcloak-ai bind <command> [args]       Agent-Owner binding
  *   zcloak-ai doc <command> [args]        Document tools
  *   zcloak-ai pow <base> <zeros>          PoW computation
+ *   zcloak-ai vetkey <command> [args]     VetKey encryption/decryption and daemon
  *
  * Architecture:
  *   cli.ts creates a Session from a constructed sub-argv array and passes it
@@ -44,6 +45,7 @@ const MODULES: Record<string, string> = {
   delete: 'delete',
   doc: 'doc',
   pow: 'pow',
+  vetkey: 'vetkey',
 };
 
 function showHelp(): void {
@@ -61,6 +63,7 @@ function showHelp(): void {
   console.log('  delete      File deletion with 2FA verification (prepare, check, confirm)');
   console.log('  doc         Document tools (manifest, verify-manifest, hash, info)');
   console.log('  pow         PoW computation (<base_string> <zeros>)');
+  console.log('  vetkey      VetKey encryption/decryption (encrypt-sign, decrypt, serve, ...)');
   console.log('');
   console.log('Global options:');
   console.log('  --identity=<pem_path>     Specify identity PEM file');

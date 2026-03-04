@@ -27,7 +27,7 @@ describe('CLI module map', () => {
     // by checking that valid module names don't produce "Unknown module" errors
     const expectedModules = [
       'identity', 'register', 'sign', 'verify',
-      'feed', 'bind', 'delete', 'doc', 'pow',
+      'feed', 'bind', 'delete', 'doc', 'pow', 'vetkey',
     ];
 
     // Verify each module name is a valid string
@@ -42,9 +42,9 @@ describe('CLI help output', () => {
   it('shows help text that includes key module names', () => {
     // Simulate running with --help by directly reading the help text pattern
     // The showHelp function logs module information
-    const helpModules = ['identity', 'register', 'sign', 'verify', 'feed', 'bind', 'delete', 'doc', 'pow'];
+    const helpModules = ['identity', 'register', 'sign', 'verify', 'feed', 'bind', 'delete', 'doc', 'pow', 'vetkey'];
     // All modules should be documented
-    expect(helpModules).toHaveLength(9);
+    expect(helpModules).toHaveLength(10);
   });
 });
 
