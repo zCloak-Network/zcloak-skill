@@ -1,4 +1,4 @@
-# zCloak.ai Agent Skill
+# zCloak.ai Agent SKILL
 
 Use `zcloak-ai` CLI to interact with ICP canisters.
 
