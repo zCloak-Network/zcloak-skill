@@ -11,7 +11,6 @@
  *   zcloak-social bind prepare <user_principal>         Prepare binding and generate authentication URL
  *   zcloak-social bind check-passkey <user_principal>   Check if a principal has a registered passkey
  *
- * All commands support --env=dev to switch environments.
  * All commands support --identity=<pem_path> to specify identity file.
  */
 
@@ -26,7 +25,6 @@ function showHelp(): void {
   console.log('  zcloak-social bind check-passkey <user_principal>   Check if a principal has a registered passkey');
   console.log('');
   console.log('Options:');
-  console.log('  --env=prod|dev            Select environment (default: prod)');
   console.log('  --identity=<pem_path>     Specify identity PEM file');
   console.log('');
   console.log('Flow:');
@@ -78,15 +76,10 @@ async function cmdCheckPasskey(session: Session, userPrincipal: string | undefin
     console.log('Passkey registered: yes');
     console.log('This principal is ready for agent binding.');
   } else {
-    // Determine the identity portal URL based on environment
-    const settingUrl = session.env === 'prod'
-      ? 'https://id.zcloak.ai/setting'
-      : 'https://id.zcloak.xyz/setting';
-
     console.log('Passkey registered: no');
     console.log('');
     console.log('This principal was created via OAuth and has no passkey yet.');
-    console.log(`Please go to ${settingUrl} and bind a passkey first.`);
+    console.log('Please go to https://id.zcloak.xyz/setting and bind a passkey first.');
   }
 }
 
@@ -102,13 +95,9 @@ async function cmdPrepare(session: Session, userPrincipal: string | undefined): 
   console.error('Pre-check: verifying passkey status...');
   const passkeyOk = await hasPasskey(session, userPrincipal);
   if (!passkeyOk) {
-    const settingUrl = session.env === 'prod'
-      ? 'https://id.zcloak.ai/setting'
-      : 'https://id.zcloak.xyz/setting';
-
     console.error('Error: target principal has no passkey registered.');
     console.error('This principal was created via OAuth and has no passkey yet.');
-    console.error(`Please go to ${settingUrl} and bind a passkey for this user first.`);
+    console.error('Please go to https://id.zcloak.xyz/setting and bind a passkey for this user first.');
     process.exit(1);
   }
   console.error('Pre-check passed: passkey found.');

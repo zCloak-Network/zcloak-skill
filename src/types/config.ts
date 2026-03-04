@@ -1,13 +1,10 @@
 /**
  * Configuration type definitions
  *
- * Defines interfaces for environment config, canister IDs, URL config, etc.
+ * Defines interfaces for canister IDs and application config.
  */
 
-/** Environment name */
-export type Environment = 'prod' | 'dev';
-
-/** Canister ID pair in environment config */
+/** Canister ID pair */
 export interface CanisterIds {
   /** Registry canister ID */
   registry: string;
@@ -15,24 +12,16 @@ export interface CanisterIds {
   signatures: string;
 }
 
-/** URL configuration (per environment) */
-export interface UrlConfig {
-  prod: string;
-  dev: string;
-}
-
 /** Full application configuration */
 export interface AppConfig {
-  /** Production environment canister IDs */
-  prod: CanisterIds;
-  /** Development environment canister IDs */
-  dev: CanisterIds;
+  /** Canister IDs */
+  canisterIds: CanisterIds;
   /** PoW required leading zeros count */
   pow_zeros: number;
   /** Agent binding page URL */
-  bind_url: UrlConfig;
+  bind_url: string;
   /** Agent profile page URL prefix */
-  profile_url: UrlConfig;
+  profile_url: string;
   /** 2FA verification page URL */
-  twofa_url: UrlConfig;
+  twofa_url: string;
 }

@@ -152,9 +152,7 @@ export function buildSignService(
 
 /**
  * Signatures canister IDL factory (standard @dfinity/agent interface)
- * Canister ID:
- *   prod: jayj5-xyaaa-aaaam-qfinq-cai
- *   dev:  zpbbm-piaaa-aaaaj-a3dsq-cai
+ * Canister ID: zpbbm-piaaa-aaaaj-a3dsq-cai
  */
 export const signIdlFactory: IDL.InterfaceFactory = () => {
   return buildSignService(IDL, buildSignTypes(IDL));
@@ -236,7 +234,7 @@ export function buildRegistryService(
       ['query']
     ),
 
-    // Get UserProfile by username (available in dev environment)
+    // Get UserProfile by username
     user_profile_get: I.Func(
       [I.Text],
       [I.Opt(UserProfile)],
@@ -284,9 +282,7 @@ export function buildRegistryService(
 
 /**
  * Registry canister IDL factory (standard @dfinity/agent interface)
- * Canister ID:
- *   prod: ytmuz-nyaaa-aaaah-qqoja-cai
- *   dev:  3spie-caaaa-aaaam-ae3sa-cai
+ * Canister ID: 3spie-caaaa-aaaam-ae3sa-cai
  */
 export const registryIdlFactory: IDL.InterfaceFactory = () => {
   return buildRegistryService(IDL, buildRegistryTypes(IDL));

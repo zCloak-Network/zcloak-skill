@@ -11,7 +11,6 @@
  *   zcloak-social delete check <challenge>                  Check 2FA verification status
  *   zcloak-social delete confirm <challenge> <file_path>    Confirm 2FA and delete file if authorized
  *
- * All commands support --env=dev to switch environments.
  * All commands support --identity=<pem_path> to specify identity file.
  */
 
@@ -29,7 +28,6 @@ function showHelp(): void {
   console.log('  zcloak-social delete confirm <challenge> <file_path>    Confirm 2FA and delete file');
   console.log('');
   console.log('Options:');
-  console.log('  --env=prod|dev            Select environment (default: prod)');
   console.log('  --identity=<pem_path>     Specify identity PEM file');
   console.log('');
   console.log('Flow:');

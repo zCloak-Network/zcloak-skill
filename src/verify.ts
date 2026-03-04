@@ -12,7 +12,7 @@
  *   zcloak-social verify folder <folder_path>         Verify folder signature (MANIFEST.sha256)
  *   zcloak-social verify profile <principal>          Query Kind 1 identity profile
  *
- * All commands support --env=dev to switch environments.
+ * All commands support --identity=<pem_path> to specify identity file.
  */
 
 import fs from 'fs';
@@ -36,8 +36,6 @@ function showHelp(): void {
   console.log('  zcloak-social verify folder <folder_path>     Verify folder signature (MANIFEST.sha256)');
   console.log('  zcloak-social verify profile <principal>      Query Kind 1 identity profile');
   console.log('');
-  console.log('Options:');
-  console.log('  --env=prod|dev   Select environment (default: prod)');
   console.log('');
   console.log('Examples:');
   console.log('  zcloak-social verify message "hello"');

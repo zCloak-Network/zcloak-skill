@@ -22,13 +22,13 @@ import type { Secp256k1KeyIdentity } from '@dfinity/identity-secp256k1';
 import type { Principal } from '@dfinity/principal';
 import { signIdlFactory, registryIdlFactory } from './idl';
 import { getPemPath, loadIdentityFromPath } from './identity';
-import { getEnv, getCanisterIds } from './config';
+import { getCanisterIds } from './config';
 import { parseArgs, computePow } from './utils';
 import config from './config';
 import type { SignService } from './types/sign-event';
 import type { RegistryService } from './types/registry';
 import type { ParsedArgs, AutoPowResult } from './types/common';
-import type { Environment, CanisterIds } from './types/config';
+import type { CanisterIds } from './types/config';
 
 /** IC mainnet host address */
 const IC_HOST = 'https://ic0.app';
@@ -37,7 +37,7 @@ const IC_HOST = 'https://ic0.app';
  * Session encapsulates all state for a single CLI command invocation.
  *
  * It holds:
- * - Parsed arguments and environment configuration (immutable after construction)
+ * - Parsed arguments and configuration (immutable after construction)
  * - Lazy-loaded identity, HTTP agents, and canister actors (cached per session)
  *
  * This design eliminates:
@@ -52,10 +52,7 @@ export class Session {
   /** Parsed command-line arguments */
   readonly args: ParsedArgs;
 
-  /** Current environment (prod or dev) */
-  readonly env: Environment;
-
-  /** Canister IDs for the current environment */
+  /** Canister IDs */
   readonly canisterIds: CanisterIds;
 
   // --- Lazy-initialized stateful resources (per-session cache) ---
@@ -68,14 +65,13 @@ export class Session {
    *
    * @param argv - Full argument array (same format as process.argv).
    *               The first two elements (node binary, script path) are skipped
-   *               by parseArgs. Global options (--env, --identity) are extracted
-   *               by getEnv/getPemPath.
+   *               by parseArgs. Global options (--identity) are extracted
+   *               by getPemPath.
    */
   constructor(argv: string[]) {
     this._argv = argv;
     this.args = parseArgs(argv);
-    this.env = getEnv(argv);
-    this.canisterIds = getCanisterIds(argv);
+    this.canisterIds = getCanisterIds();
   }
 
   // ========== Identity ==========
@@ -208,20 +204,20 @@ export class Session {
     return { nonce: result.nonce, hash: result.hash, base };
   }
 
-  // ========== Environment Helpers ==========
+  // ========== URL Helpers ==========
 
-  /** Get the bind URL for the current environment */
+  /** Get the bind URL */
   getBindUrl(): string {
-    return config.bind_url[this.env];
+    return config.bind_url;
   }
 
-  /** Get the profile URL prefix for the current environment */
+  /** Get the profile URL prefix */
   getProfileUrl(): string {
-    return config.profile_url[this.env];
+    return config.profile_url;
   }
 
-  /** Get the 2FA verification URL for the current environment */
+  /** Get the 2FA verification URL */
   getTwoFAUrl(): string {
-    return config.twofa_url[this.env];
+    return config.twofa_url;
   }
 }

@@ -63,7 +63,6 @@ function showHelp(): void {
   console.log('  pow         PoW computation (<base_string> <zeros>)');
   console.log('');
   console.log('Global options:');
-  console.log('  --env=prod|dev            Select environment (default: prod)');
   console.log('  --identity=<pem_path>     Specify identity PEM file');
   console.log('');
   console.log('Examples:');
@@ -84,8 +83,8 @@ function showHelp(): void {
  * synthetic sub-argv array that looks like what the sub-script would see if
  * invoked directly, and pass it via a Session instance.
  *
- * Original process.argv: ['node', 'cli.js', 'register', 'get-principal', '--env=dev']
- * Constructed sub-argv:  ['node', 'register.js', 'get-principal', '--env=dev']
+ * Original process.argv: ['node', 'cli.js', 'register', 'get-principal']
+ * Constructed sub-argv:  ['node', 'register.js', 'get-principal']
  *
  * The Session constructor calls parseArgs(subArgv) which skips [0] and [1],
  * so the sub-script receives the same parsed arguments as before.

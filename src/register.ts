@@ -13,7 +13,6 @@
  *   zcloak-social register register <base_name>                  Register new agent name
  *   zcloak-social register get-owner <principal>                  Query agent's owner (binding relationship)
  *
- * All commands support --env=dev to switch to dev environment, default: prod.
  * All commands support --identity=<pem_path> to specify identity file.
  */
 
@@ -33,12 +32,10 @@ function showHelp(): void {
   console.log('  zcloak-social register get-owner <principal>               Query agent\'s owner');
   console.log('');
   console.log('Options:');
-  console.log('  --env=prod|dev            Select environment (default: prod)');
   console.log('  --identity=<pem_path>     Specify identity PEM file');
   console.log('');
   console.log('Examples:');
   console.log('  zcloak-social register get-principal');
-  console.log('  zcloak-social register lookup --env=dev');
   console.log('  zcloak-social register register my-agent');
   console.log('  zcloak-social register lookup-by-name "runner#8939.agent"');
 }
@@ -123,7 +120,6 @@ async function cmdGetOwner(session: Session, principalOrName: string | undefined
     process.exit(1);
   }
 
-  const env = session.env;
   const actor = await session.getAnonymousRegistryActor();
 
   // Determine if it's a principal or agent name (agent name contains # and .agent)
@@ -131,28 +127,9 @@ async function cmdGetOwner(session: Session, principalOrName: string | undefined
 
   let profile;
 
-  // TODO: This environment-specific branching exists because the prod and dev canisters
-  // expose slightly different APIs. The prod canister lacks user_profile_get (query by name).
-  // When the prod canister is upgraded to include this method, simplify to a single code path.
-  // See also: idl.ts registryIdlFactory — user_profile_get is defined in IDL for both envs,
-  // but the prod canister currently returns an error if called.
-  if (isAgentName && env === 'dev') {
-    // dev environment supports user_profile_get (query by agent name directly)
+  if (isAgentName) {
+    // Query by agent name directly via user_profile_get
     profile = await actor.user_profile_get(principalOrName);
-  } else if (isAgentName && env === 'prod') {
-    // prod environment doesn't have user_profile_get, need to look up principal by name first, then query profile
-    console.error('prod environment: looking up principal by agent name...');
-    const principalResult = await actor.get_user_principal(principalOrName);
-
-    if (!principalResult || principalResult.length === 0) {
-      console.error(`No principal found for agent name "${principalOrName}"`);
-      console.log('(null)');
-      process.exit(1);
-    }
-
-    const resolvedPrincipal = principalResult[0]!.toText();
-    console.error(`Found principal: ${resolvedPrincipal}`);
-    profile = await actor.user_profile_get_by_principal(resolvedPrincipal);
   } else {
     // Query by principal directly
     profile = await actor.user_profile_get_by_principal(principalOrName);

@@ -22,7 +22,6 @@
  *   --tags=t:crypto,...     Tags (key:value comma-separated)
  *   --mentions=id1,id2     Mentioned agent IDs
  *
- * All commands support --env=dev to switch environments.
  * All commands support --identity=<pem_path> to specify identity file.
  */
 
@@ -62,7 +61,6 @@ function showHelp(): void {
   console.log('  --tags=t:crypto,...     Tags (key:value comma-separated)');
   console.log('  --mentions=id1,id2     Mentioned agent IDs');
   console.log('  --url=<url>            URL for document signing (optional)');
-  console.log('  --env=prod|dev         Environment selection (default: prod)');
   console.log('  --identity=<pem_path>  Specify identity PEM file');
   console.log('');
   console.log('Examples:');

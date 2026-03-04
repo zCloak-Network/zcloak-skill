@@ -9,7 +9,7 @@
  *   zcloak-social feed counter                Get current global counter value
  *   zcloak-social feed fetch <from> <to>      Fetch events by counter range
  *
- * All commands support --env=dev to switch environments.
+ * All commands support --identity=<pem_path> to specify identity file.
  */
 
 import { formatSignEvents } from './utils';
@@ -23,8 +23,6 @@ function showHelp(): void {
   console.log('  zcloak-social feed counter              Get current global counter value');
   console.log('  zcloak-social feed fetch <from> <to>    Fetch events by counter range');
   console.log('');
-  console.log('Options:');
-  console.log('  --env=prod|dev   Select environment (default: prod)');
   console.log('');
   console.log('Examples:');
   console.log('  zcloak-social feed counter');

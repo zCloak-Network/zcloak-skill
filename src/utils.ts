@@ -3,21 +3,15 @@
  *
  * Provides PoW computation, file hashing, argument parsing, formatted output, and more.
  * All other scripts depend on this module.
- *
- * Note: Environment management functions (getEnv, getCanisterIds, getEnvLabel) have been moved to config.ts.
- * Re-exported here for backward compatibility.
  */
 
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import config, { getEnv, getCanisterIds, getEnvLabel } from './config';
+import config from './config';
 import { getPemPath, loadIdentityFromPath } from './identity';
 import type { ParsedArgs, PowResult, ManifestOptions, ManifestResult, ManifestEntry, ManifestVerifyResult } from './types/common';
 import type { SignEvent, SignResult } from './types/sign-event';
-
-// ========== Re-export environment management functions (backward compatibility) ==========
-export { getEnv, getCanisterIds, getEnvLabel };
 
 // ========== PoW Computation ==========
 
