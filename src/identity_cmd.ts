@@ -5,11 +5,17 @@
  * Generates and inspects ECDSA secp256k1 identity PEM files without requiring dfx.
  * Uses Node.js built-in crypto module to produce the same SEC1 PEM format that dfx generates.
  *
+ * IMPORTANT: The default PEM path (~/.config/dfx/identity/default/identity.pem) is shared
+ * with dfx. To avoid accidentally destroying an existing private key, the generate command
+ * will detect and reuse any existing PEM file at the target path. Use --force to explicitly
+ * regenerate a new key (the old key will be permanently lost).
+ *
  * Usage:
  *   zcloak-ai identity generate [--output=<path>] [--force]
- *       Generate a new secp256k1 private key PEM file.
+ *       If a PEM file already exists at the target path, read and reuse it.
+ *       Only generates a new key when no existing file is found.
  *       Default output: ~/.config/dfx/identity/default/identity.pem
- *       Use --force to overwrite an existing file.
+ *       Use --force to overwrite an existing file with a brand-new key.
  *
  *   zcloak-ai identity show
  *       Print the PEM path and principal ID of the current identity.
@@ -29,15 +35,17 @@ function showHelp(): void {
   console.log('');
   console.log('Usage:');
   console.log('  zcloak-ai identity generate [--output=<path>] [--force]');
-  console.log('      Generate a new ECDSA secp256k1 PEM key file (no dfx required)');
+  console.log('      Ensure an ECDSA secp256k1 PEM key exists (no dfx required).');
+  console.log('      If a PEM file already exists, reuse it (safe for dfx users).');
+  console.log('      Only generates a new key when no file is found at the path.');
   console.log('      Default path: ~/.config/dfx/identity/default/identity.pem');
   console.log('');
   console.log('  zcloak-ai identity show');
   console.log('      Print PEM file path and principal ID of the current identity');
   console.log('');
   console.log('Options:');
-  console.log('  --output=<path>    Custom output path for the generated PEM file');
-  console.log('  --force            Overwrite existing PEM file without error');
+  console.log('  --output=<path>    Custom output path for the PEM file');
+  console.log('  --force            Force regenerate a NEW key (overwrites existing!)');
   console.log('  --identity=<path>  Use a specific identity PEM (for "show" command)');
   console.log('');
   console.log('Examples:');
@@ -71,11 +79,23 @@ function cmdGenerate(args: ParsedArgs): void {
     ? path.resolve(outputRaw)
     : DEFAULT_PEM_PATH;
 
-  // Safety check: refuse to overwrite without --force
+  // Safety: if a PEM file already exists and --force is NOT set, reuse the
+  // existing key instead of overwriting it. This is critical because the default
+  // path is shared with dfx — blindly generating a new key would destroy the
+  // user's existing dfx identity and any associated canister permissions.
   if (fs.existsSync(outputPath) && !args['force']) {
-    console.error(`Error: PEM file already exists: ${outputPath}`);
-    console.error('Use --force to overwrite.');
-    process.exit(1);
+    try {
+      const identity = loadIdentityFromPath(outputPath);
+      console.log(`Existing identity found, reusing: ${outputPath}`);
+      console.log(`Principal ID:                     ${identity.getPrincipal().toText()}`);
+      return;
+    } catch {
+      // The existing file is corrupt or not a valid PEM — warn the user and
+      // refuse to silently overwrite it. They must use --force intentionally.
+      console.error(`Error: file exists but is not a valid PEM: ${outputPath}`);
+      console.error('Use --force to overwrite with a new key.');
+      process.exit(1);
+    }
   }
 
   // Ensure parent directory exists

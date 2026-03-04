@@ -76,18 +76,38 @@ describe('identity generate command', () => {
     expect(mockLog).toHaveBeenCalledWith(expect.stringContaining('Principal ID'));
   });
 
-  it('refuses to overwrite existing file without --force', () => {
+  it('reuses existing valid PEM file without --force', () => {
     const outputPath = path.join(tmpDir, 'existing.pem');
-    fs.writeFileSync(outputPath, 'existing-content');
+
+    // First generate a valid PEM
+    const genSession = new Session(['node', 'identity_cmd.js', 'generate', `--output=${outputPath}`]);
+    run(genSession);
+    const originalPem = fs.readFileSync(outputPath, 'utf-8');
+    vi.clearAllMocks();
+
+    // Run generate again without --force — should reuse existing key
+    const session = new Session(['node', 'identity_cmd.js', 'generate', `--output=${outputPath}`]);
+    run(session);
+
+    // Original PEM file should be unchanged (not overwritten)
+    expect(fs.readFileSync(outputPath, 'utf-8')).toBe(originalPem);
+    // Should indicate reuse, not generation
+    expect(mockLog).toHaveBeenCalledWith(expect.stringContaining('Existing identity found'));
+    expect(mockLog).toHaveBeenCalledWith(expect.stringContaining('Principal ID'));
+  });
+
+  it('errors when existing file is not a valid PEM', () => {
+    const outputPath = path.join(tmpDir, 'bad-pem.pem');
+    fs.writeFileSync(outputPath, 'not-a-valid-pem');
 
     const session = new Session(['node', 'identity_cmd.js', 'generate', `--output=${outputPath}`]);
 
     expect(() => run(session)).toThrow('process.exit called');
     expect(mockExit).toHaveBeenCalledWith(1);
-    expect(mockError).toHaveBeenCalledWith(expect.stringContaining('already exists'));
+    expect(mockError).toHaveBeenCalledWith(expect.stringContaining('not a valid PEM'));
 
     // Original file should be unchanged
-    expect(fs.readFileSync(outputPath, 'utf-8')).toBe('existing-content');
+    expect(fs.readFileSync(outputPath, 'utf-8')).toBe('not-a-valid-pem');
   });
 
   it('overwrites existing file with --force', () => {
