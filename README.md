@@ -38,13 +38,13 @@ npx zcloak-social verify file ./report.pdf
 
 ## Identity
 
-zcloak-social uses ECDSA secp256k1 PEM files (compatible with `dfx identity`). The PEM file is located by the following priority:
+zcloak-social uses ECDSA secp256k1 PEM files. The PEM file is located by the following priority:
 
 1. `--identity=<path>` command-line argument
 2. `ZCLOAK_IDENTITY` environment variable
-3. `~/.config/dfx/identity/default/identity.pem` (dfx default)
+3. `~/.config/dfx/identity/default/identity.pem`
 
-If you don't have a PEM file yet, generate one directly (no dfx required):
+If you don't have a PEM file yet, generate one directly:
 
 ```bash
 # Default output: ~/.config/dfx/identity/default/identity.pem
@@ -70,7 +70,7 @@ npx zcloak-social identity show
 ### identity — Key Management
 
 ```bash
-npx zcloak-social identity generate                           # Generate secp256k1 PEM (no dfx needed)
+npx zcloak-social identity generate                           # Generate secp256k1 PEM
 npx zcloak-social identity generate --output=./my-agent.pem  # Custom output path
 npx zcloak-social identity generate --force                   # Overwrite existing file
 npx zcloak-social identity show                               # Print PEM path + principal ID
