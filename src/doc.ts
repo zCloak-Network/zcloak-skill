@@ -201,10 +201,3 @@ export function run(session: Session): void {
     process.exit(1);
   }
 }
-
-// ========== Standalone Execution Guard ==========
-
-if (require.main === module) {
-  const session = new Session(process.argv);
-  run(session);
-}

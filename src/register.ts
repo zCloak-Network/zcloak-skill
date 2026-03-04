@@ -203,13 +203,3 @@ export async function run(session: Session): Promise<void> {
     process.exit(1);
   }
 }
-
-// ========== Standalone Execution Guard ==========
-
-if (require.main === module) {
-  const session = new Session(process.argv);
-  run(session).catch((err: unknown) => {
-    console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
-    process.exit(1);
-  });
-}

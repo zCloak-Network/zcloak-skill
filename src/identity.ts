@@ -17,7 +17,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { Secp256k1KeyIdentity } from '@dfinity/identity-secp256k1';
-import type { Principal } from '@dfinity/principal';
+
 
 // ========== PEM File Lookup ==========
 
@@ -79,16 +79,12 @@ export function getPemPath(argv?: string[]): string {
 
 // ========== Identity Management ==========
 
-/** Cached identity instance (loaded from the resolved PEM path) */
-let _identity: Secp256k1KeyIdentity | null = null;
-
 /**
  * Load an ECDSA secp256k1 identity directly from a given PEM file path.
  *
- * Unlike loadIdentity(), this function does NOT use the cached singleton and
- * does NOT read the PEM path from argv/environment variables. It is intended
+ * Does NOT read the PEM path from argv/environment variables. It is intended
  * for cases where the caller already knows the exact path (e.g. after generating
- * a new key file).
+ * a new key file, or when Session has already resolved the path).
  *
  * Uses Secp256k1KeyIdentity.fromPem() which handles the dfx PEM format:
  *   -----BEGIN EC PRIVATE KEY-----   (SEC1 / RFC 5915 format)
@@ -108,41 +104,4 @@ export function loadIdentityFromPath(pemPath: string): Secp256k1KeyIdentity {
       `Failed to load ECDSA secp256k1 identity from ${pemPath}: ${(err as Error).message}`
     );
   }
-}
-
-/**
- * Load ECDSA secp256k1 identity, resolving the PEM path from argv / env / default.
- *
- * Returns a cached instance on subsequent calls to avoid re-reading the file.
- *
- * @deprecated Uses module-level cache (global mutable state) and reads process.argv implicitly.
- * Use Session.getIdentity() instead for per-invocation state management.
- */
-export function loadIdentity(): Secp256k1KeyIdentity {
-  if (_identity) return _identity;
-
-  const pemPath = getPemPath();
-  _identity = loadIdentityFromPath(pemPath);
-  return _identity;
-}
-
-/**
- * Get current identity's Principal ID (text format)
- * Replaces the original `dfx identity get-principal`
- *
- * @deprecated Uses module-level cache via loadIdentity(). Use Session.getPrincipal() instead.
- */
-export function getPrincipal(): string {
-  const identity = loadIdentity();
-  return identity.getPrincipal().toText();
-}
-
-/**
- * Get current identity's Principal object
- *
- * @deprecated Uses module-level cache via loadIdentity(). Use Session.getPrincipalObj() instead.
- */
-export function getPrincipalObj(): Principal {
-  const identity = loadIdentity();
-  return identity.getPrincipal();
 }

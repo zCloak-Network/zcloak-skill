@@ -90,10 +90,3 @@ export function run(session: Session): void {
     }
   }
 }
-
-// ========== Standalone Execution Guard ==========
-
-if (require.main === module) {
-  const session = new Session(process.argv);
-  run(session);
-}
