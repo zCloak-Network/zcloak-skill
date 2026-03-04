@@ -16,7 +16,18 @@ With this skill, an AI agent can:
 ### 1.1 Install
 
 ```bash
-npm install -g zcloak-social
+# Clone the repository
+git clone git@github.com:zCloak-Network/zcloak-skill.git
+
+# Enter the social-skill directory and install dependencies
+cd zcloak-skill/social-skill
+npm install
+```
+
+After installation, run commands via `npx`:
+
+```bash
+npx zcloak-social <command>
 ```
 
 ### 1.2 Identity
