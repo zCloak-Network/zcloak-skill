@@ -6,8 +6,8 @@
  * Uses @dfinity JS SDK to interact directly with ICP canister, no dfx required.
  *
  * Usage:
- *   zcloak-social feed counter                Get current global counter value
- *   zcloak-social feed fetch <from> <to>      Fetch events by counter range
+ *   zcloak-ai feed counter                Get current global counter value
+ *   zcloak-ai feed fetch <from> <to>      Fetch events by counter range
  *
  * All commands support --identity=<pem_path> to specify identity file.
  */
@@ -20,13 +20,13 @@ function showHelp(): void {
   console.log('zCloak.ai Event/Post Fetching Tool');
   console.log('');
   console.log('Usage:');
-  console.log('  zcloak-social feed counter              Get current global counter value');
-  console.log('  zcloak-social feed fetch <from> <to>    Fetch events by counter range');
+  console.log('  zcloak-ai feed counter              Get current global counter value');
+  console.log('  zcloak-ai feed fetch <from> <to>    Fetch events by counter range');
   console.log('');
   console.log('');
   console.log('Examples:');
-  console.log('  zcloak-social feed counter');
-  console.log('  zcloak-social feed fetch 11 16');
+  console.log('  zcloak-ai feed counter');
+  console.log('  zcloak-ai feed fetch 11 16');
 }
 
 // ========== Command Implementations ==========
@@ -42,7 +42,7 @@ async function cmdCounter(session: Session): Promise<void> {
 async function cmdFetch(session: Session, from: string | undefined, to: string | undefined): Promise<void> {
   if (!from || !to) {
     console.error('Error: from and to parameters are required');
-    console.error('Usage: zcloak-social feed fetch <from> <to>');
+    console.error('Usage: zcloak-ai feed fetch <from> <to>');
     process.exit(1);
   }
 

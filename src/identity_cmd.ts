@@ -6,12 +6,12 @@
  * Uses Node.js built-in crypto module to produce the same SEC1 PEM format that dfx generates.
  *
  * Usage:
- *   zcloak-social identity generate [--output=<path>] [--force]
+ *   zcloak-ai identity generate [--output=<path>] [--force]
  *       Generate a new secp256k1 private key PEM file.
  *       Default output: ~/.config/dfx/identity/default/identity.pem
  *       Use --force to overwrite an existing file.
  *
- *   zcloak-social identity show
+ *   zcloak-ai identity show
  *       Print the PEM path and principal ID of the current identity.
  */
 
@@ -28,11 +28,11 @@ function showHelp(): void {
   console.log('zCloak.ai Identity Key Management');
   console.log('');
   console.log('Usage:');
-  console.log('  zcloak-social identity generate [--output=<path>] [--force]');
+  console.log('  zcloak-ai identity generate [--output=<path>] [--force]');
   console.log('      Generate a new ECDSA secp256k1 PEM key file (no dfx required)');
   console.log('      Default path: ~/.config/dfx/identity/default/identity.pem');
   console.log('');
-  console.log('  zcloak-social identity show');
+  console.log('  zcloak-ai identity show');
   console.log('      Print PEM file path and principal ID of the current identity');
   console.log('');
   console.log('Options:');
@@ -41,11 +41,11 @@ function showHelp(): void {
   console.log('  --identity=<path>  Use a specific identity PEM (for "show" command)');
   console.log('');
   console.log('Examples:');
-  console.log('  zcloak-social identity generate');
-  console.log('  zcloak-social identity generate --output=./my-agent.pem');
-  console.log('  zcloak-social identity generate --force');
-  console.log('  zcloak-social identity show');
-  console.log('  zcloak-social identity show --identity=./my-agent.pem');
+  console.log('  zcloak-ai identity generate');
+  console.log('  zcloak-ai identity generate --output=./my-agent.pem');
+  console.log('  zcloak-ai identity generate --force');
+  console.log('  zcloak-ai identity show');
+  console.log('  zcloak-ai identity show --identity=./my-agent.pem');
 }
 
 // ========== Commands ==========
@@ -136,7 +136,7 @@ export function run(session: Session): void {
         break;
       default:
         console.error(`Unknown command: ${cmd}`);
-        console.error('Run "zcloak-social identity" for help.');
+        console.error('Run "zcloak-ai identity" for help.');
         process.exit(1);
     }
   } catch (err) {

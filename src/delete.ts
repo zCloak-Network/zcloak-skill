@@ -7,9 +7,9 @@
  * Uses @dfinity JS SDK to interact directly with ICP canister, no dfx required.
  *
  * Usage:
- *   zcloak-social delete prepare <file_path>                Prepare 2FA request and generate authentication URL
- *   zcloak-social delete check <challenge>                  Check 2FA verification status
- *   zcloak-social delete confirm <challenge> <file_path>    Confirm 2FA and delete file if authorized
+ *   zcloak-ai delete prepare <file_path>                Prepare 2FA request and generate authentication URL
+ *   zcloak-ai delete check <challenge>                  Check 2FA verification status
+ *   zcloak-ai delete confirm <challenge> <file_path>    Confirm 2FA and delete file if authorized
  *
  * All commands support --identity=<pem_path> to specify identity file.
  */
@@ -23,9 +23,9 @@ function showHelp(): void {
   console.log('zCloak.ai File Deletion with 2FA Verification Tool');
   console.log('');
   console.log('Usage:');
-  console.log('  zcloak-social delete prepare <file_path>                Prepare 2FA request and generate auth URL');
-  console.log('  zcloak-social delete check <challenge>                  Check 2FA verification status');
-  console.log('  zcloak-social delete confirm <challenge> <file_path>    Confirm 2FA and delete file');
+  console.log('  zcloak-ai delete prepare <file_path>                Prepare 2FA request and generate auth URL');
+  console.log('  zcloak-ai delete check <challenge>                  Check 2FA verification status');
+  console.log('  zcloak-ai delete confirm <challenge> <file_path>    Confirm 2FA and delete file');
   console.log('');
   console.log('Options:');
   console.log('  --identity=<pem_path>     Specify identity PEM file');
@@ -36,9 +36,9 @@ function showHelp(): void {
   console.log('  3. Run `delete confirm <challenge> <file>` to verify 2FA and delete the file');
   console.log('');
   console.log('Examples:');
-  console.log('  zcloak-social delete prepare ./report.pdf');
-  console.log('  zcloak-social delete check "abc123..."');
-  console.log('  zcloak-social delete confirm "abc123..." ./report.pdf');
+  console.log('  zcloak-ai delete prepare ./report.pdf');
+  console.log('  zcloak-ai delete check "abc123..."');
+  console.log('  zcloak-ai delete confirm "abc123..." ./report.pdf');
 }
 
 // ========== Command Implementations ==========
@@ -51,7 +51,7 @@ function showHelp(): void {
 async function cmdPrepare(session: Session, filePath: string | undefined): Promise<void> {
   if (!filePath) {
     console.error('Error: file path is required');
-    console.error('Usage: zcloak-social delete prepare <file_path>');
+    console.error('Usage: zcloak-ai delete prepare <file_path>');
     process.exit(1);
   }
 
@@ -126,7 +126,7 @@ async function cmdPrepare(session: Session, filePath: string | undefined): Promi
   if (challenge) {
     console.log('');
     console.log('After completing authentication, run:');
-    console.log(`  zcloak-social delete confirm "${challenge}" "${filePath}"`);
+    console.log(`  zcloak-ai delete confirm "${challenge}" "${filePath}"`);
   }
 }
 
@@ -137,7 +137,7 @@ async function cmdPrepare(session: Session, filePath: string | undefined): Promi
 async function cmdCheck(session: Session, challenge: string | undefined): Promise<void> {
   if (!challenge) {
     console.error('Error: challenge string is required');
-    console.error('Usage: zcloak-social delete check <challenge>');
+    console.error('Usage: zcloak-ai delete check <challenge>');
     process.exit(1);
   }
 
@@ -181,7 +181,7 @@ async function cmdConfirm(
 ): Promise<void> {
   if (!challenge || !filePath) {
     console.error('Error: both challenge and file path are required');
-    console.error('Usage: zcloak-social delete confirm <challenge> <file_path>');
+    console.error('Usage: zcloak-ai delete confirm <challenge> <file_path>');
     process.exit(1);
   }
 

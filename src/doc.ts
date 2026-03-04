@@ -6,10 +6,10 @@
  * Pure Node.js implementation, cross-platform compatible, no external shell commands required.
  *
  * Usage:
- *   zcloak-social doc manifest <folder_path> [--version=1.0.0]    Generate MANIFEST.sha256 (with metadata header)
- *   zcloak-social doc verify-manifest <folder_path>               Verify file integrity in MANIFEST.sha256
- *   zcloak-social doc hash <file_path>                            Compute single file SHA256 hash
- *   zcloak-social doc info <file_path>                            Show file hash, size, MIME, etc.
+ *   zcloak-ai doc manifest <folder_path> [--version=1.0.0]    Generate MANIFEST.sha256 (with metadata header)
+ *   zcloak-ai doc verify-manifest <folder_path>               Verify file integrity in MANIFEST.sha256
+ *   zcloak-ai doc hash <file_path>                            Compute single file SHA256 hash
+ *   zcloak-ai doc info <file_path>                            Show file hash, size, MIME, etc.
  */
 
 import fs from 'fs';
@@ -29,19 +29,19 @@ function showHelp(): void {
   console.log('zCloak.ai Document Tool');
   console.log('');
   console.log('Usage:');
-  console.log('  zcloak-social doc manifest <folder_path> [--version=1.0.0]   Generate MANIFEST.sha256');
-  console.log('  zcloak-social doc verify-manifest <folder_path>              Verify file integrity');
-  console.log('  zcloak-social doc hash <file_path>                           Compute SHA256 hash');
-  console.log('  zcloak-social doc info <file_path>                           Show file details');
+  console.log('  zcloak-ai doc manifest <folder_path> [--version=1.0.0]   Generate MANIFEST.sha256');
+  console.log('  zcloak-ai doc verify-manifest <folder_path>              Verify file integrity');
+  console.log('  zcloak-ai doc hash <file_path>                           Compute SHA256 hash');
+  console.log('  zcloak-ai doc info <file_path>                           Show file details');
   console.log('');
   console.log('Options:');
   console.log('  --version=x.y.z  MANIFEST version (default: 1.0.0)');
   console.log('');
   console.log('Examples:');
-  console.log('  zcloak-social doc manifest ./my-skill/ --version=2.0.0');
-  console.log('  zcloak-social doc verify-manifest ./my-skill/');
-  console.log('  zcloak-social doc hash ./report.pdf');
-  console.log('  zcloak-social doc info ./report.pdf');
+  console.log('  zcloak-ai doc manifest ./my-skill/ --version=2.0.0');
+  console.log('  zcloak-ai doc verify-manifest ./my-skill/');
+  console.log('  zcloak-ai doc hash ./report.pdf');
+  console.log('  zcloak-ai doc info ./report.pdf');
 }
 
 // ========== Command Implementations ==========
@@ -116,7 +116,7 @@ function cmdVerifyManifest(folderPath: string | undefined): void {
   // Output MANIFEST hash (for subsequent on-chain verification)
   const manifestHash = hashFile(manifestPath);
   console.log(`\nMANIFEST SHA256: ${manifestHash}`);
-  console.log('(Use this hash for on-chain signature verification: zcloak-social verify file MANIFEST.sha256)');
+  console.log('(Use this hash for on-chain signature verification: zcloak-ai verify file MANIFEST.sha256)');
 }
 
 /** Compute single file SHA256 hash */

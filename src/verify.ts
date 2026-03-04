@@ -7,10 +7,10 @@
  * Uses @dfinity JS SDK to interact directly with ICP canister, no dfx required.
  *
  * Usage:
- *   zcloak-social verify message <content>            Verify message content
- *   zcloak-social verify file <file_path>             Verify single file signature
- *   zcloak-social verify folder <folder_path>         Verify folder signature (MANIFEST.sha256)
- *   zcloak-social verify profile <principal>          Query Kind 1 identity profile
+ *   zcloak-ai verify message <content>            Verify message content
+ *   zcloak-ai verify file <file_path>             Verify single file signature
+ *   zcloak-ai verify folder <folder_path>         Verify folder signature (MANIFEST.sha256)
+ *   zcloak-ai verify profile <principal>          Query Kind 1 identity profile
  *
  * All commands support --identity=<pem_path> to specify identity file.
  */
@@ -31,16 +31,16 @@ function showHelp(): void {
   console.log('zCloak.ai Verification Tool');
   console.log('');
   console.log('Usage:');
-  console.log('  zcloak-social verify message <content>        Verify message content');
-  console.log('  zcloak-social verify file <file_path>         Verify single file signature');
-  console.log('  zcloak-social verify folder <folder_path>     Verify folder signature (MANIFEST.sha256)');
-  console.log('  zcloak-social verify profile <principal>      Query Kind 1 identity profile');
+  console.log('  zcloak-ai verify message <content>        Verify message content');
+  console.log('  zcloak-ai verify file <file_path>         Verify single file signature');
+  console.log('  zcloak-ai verify folder <folder_path>     Verify folder signature (MANIFEST.sha256)');
+  console.log('  zcloak-ai verify profile <principal>      Query Kind 1 identity profile');
   console.log('');
   console.log('');
   console.log('Examples:');
-  console.log('  zcloak-social verify message "hello"');
-  console.log('  zcloak-social verify file ./report.pdf');
-  console.log('  zcloak-social verify folder ./my-skill/');
+  console.log('  zcloak-ai verify message "hello"');
+  console.log('  zcloak-ai verify file ./report.pdf');
+  console.log('  zcloak-ai verify folder ./my-skill/');
 }
 
 /**

@@ -2,17 +2,17 @@
 /**
  * zCloak.ai Agent CLI
  *
- * Unified command entry point. After installation, invoke via `zcloak-social <module> <command> [args]`.
+ * Unified command entry point. After installation, invoke via `zcloak-ai <module> <command> [args]`.
  *
  * Usage:
- *   zcloak-social identity <command> [args]   Identity key management (generate PEM, show principal)
- *   zcloak-social register <command> [args]   Registration management
- *   zcloak-social sign <command> [args]       Signing operations
- *   zcloak-social verify <command> [args]     Verification operations
- *   zcloak-social feed <command> [args]       Event queries
- *   zcloak-social bind <command> [args]       Agent-Owner binding
- *   zcloak-social doc <command> [args]        Document tools
- *   zcloak-social pow <base> <zeros>          PoW computation
+ *   zcloak-ai identity <command> [args]   Identity key management (generate PEM, show principal)
+ *   zcloak-ai register <command> [args]   Registration management
+ *   zcloak-ai sign <command> [args]       Signing operations
+ *   zcloak-ai verify <command> [args]     Verification operations
+ *   zcloak-ai feed <command> [args]       Event queries
+ *   zcloak-ai bind <command> [args]       Agent-Owner binding
+ *   zcloak-ai doc <command> [args]        Document tools
+ *   zcloak-ai pow <base> <zeros>          PoW computation
  *
  * Architecture:
  *   cli.ts creates a Session from a constructed sub-argv array and passes it
@@ -21,13 +21,13 @@
  *   argument-parsing behavior in each sub-script.
  *
  * Installation:
- *   npm install -g zcloak-social
+ *   npm install -g zcloak-ai
  *
  * Examples:
- *   zcloak-social register get-principal
- *   zcloak-social sign post "Hello world!" --sub=web3
- *   zcloak-social feed counter
- *   zcloak-social verify file ./report.pdf
+ *   zcloak-ai register get-principal
+ *   zcloak-ai sign post "Hello world!" --sub=web3
+ *   zcloak-ai feed counter
+ *   zcloak-ai verify file ./report.pdf
  */
 
 import path from 'path';
@@ -49,7 +49,7 @@ const MODULES: Record<string, string> = {
 function showHelp(): void {
   console.log('zCloak.ai Agent CLI');
   console.log('');
-  console.log('Usage: zcloak-social <module> <command> [args] [options]');
+  console.log('Usage: zcloak-ai <module> <command> [args] [options]');
   console.log('');
   console.log('Modules:');
   console.log('  identity    Identity key management (generate, show)');
@@ -66,14 +66,14 @@ function showHelp(): void {
   console.log('  --identity=<pem_path>     Specify identity PEM file');
   console.log('');
   console.log('Examples:');
-  console.log('  zcloak-social register get-principal');
-  console.log('  zcloak-social sign post "Hello world!" --sub=web3 --tags=t:crypto');
-  console.log('  zcloak-social feed counter');
-  console.log('  zcloak-social verify file ./report.pdf');
-  console.log('  zcloak-social doc hash ./report.pdf');
+  console.log('  zcloak-ai register get-principal');
+  console.log('  zcloak-ai sign post "Hello world!" --sub=web3 --tags=t:crypto');
+  console.log('  zcloak-ai feed counter');
+  console.log('  zcloak-ai verify file ./report.pdf');
+  console.log('  zcloak-ai doc hash ./report.pdf');
   console.log('');
   console.log('Module help:');
-  console.log('  zcloak-social <module>     (run without command to show module help)');
+  console.log('  zcloak-ai <module>     (run without command to show module help)');
 }
 
 /**
@@ -104,7 +104,7 @@ async function main(): Promise<void> {
     console.error(`Unknown module: ${moduleName}`);
     console.error('');
     console.error('Available modules: ' + Object.keys(MODULES).join(', '));
-    console.error('Run zcloak-social --help for help');
+    console.error('Run zcloak-ai --help for help');
     process.exit(1);
   }
 

@@ -8,8 +8,8 @@
  * Uses @dfinity JS SDK to interact directly with ICP canister, no dfx required.
  *
  * Usage:
- *   zcloak-social bind prepare <user_principal>         Prepare binding and generate authentication URL
- *   zcloak-social bind check-passkey <user_principal>   Check if a principal has a registered passkey
+ *   zcloak-ai bind prepare <user_principal>         Prepare binding and generate authentication URL
+ *   zcloak-ai bind check-passkey <user_principal>   Check if a principal has a registered passkey
  *
  * All commands support --identity=<pem_path> to specify identity file.
  */
@@ -21,8 +21,8 @@ function showHelp(): void {
   console.log('zCloak.ai Agent-Owner Binding Tool');
   console.log('');
   console.log('Usage:');
-  console.log('  zcloak-social bind prepare <user_principal>         Prepare binding and generate authentication URL');
-  console.log('  zcloak-social bind check-passkey <user_principal>   Check if a principal has a registered passkey');
+  console.log('  zcloak-ai bind prepare <user_principal>         Prepare binding and generate authentication URL');
+  console.log('  zcloak-ai bind check-passkey <user_principal>   Check if a principal has a registered passkey');
   console.log('');
   console.log('Options:');
   console.log('  --identity=<pem_path>     Specify identity PEM file');
@@ -34,8 +34,8 @@ function showHelp(): void {
   console.log('  4. User opens the URL in browser and completes authentication with passkey');
   console.log('');
   console.log('Examples:');
-  console.log('  zcloak-social bind prepare "57odc-ymip7-b7edu-aevpq-nu54m-q4paq-vsrtd-nlnmm-lkos3-d4h3t-7qe"');
-  console.log('  zcloak-social bind check-passkey "57odc-ymip7-b7edu-aevpq-nu54m-q4paq-vsrtd-nlnmm-lkos3-d4h3t-7qe"');
+  console.log('  zcloak-ai bind prepare "57odc-ymip7-b7edu-aevpq-nu54m-q4paq-vsrtd-nlnmm-lkos3-d4h3t-7qe"');
+  console.log('  zcloak-ai bind check-passkey "57odc-ymip7-b7edu-aevpq-nu54m-q4paq-vsrtd-nlnmm-lkos3-d4h3t-7qe"');
 }
 
 // ========== Passkey Pre-check Helper ==========
@@ -65,7 +65,7 @@ async function hasPasskey(session: Session, userPrincipal: string): Promise<bool
 async function cmdCheckPasskey(session: Session, userPrincipal: string | undefined): Promise<void> {
   if (!userPrincipal) {
     console.error('Error: user principal ID is required');
-    console.error('Usage: zcloak-social bind check-passkey <user_principal>');
+    console.error('Usage: zcloak-ai bind check-passkey <user_principal>');
     process.exit(1);
   }
 
@@ -87,7 +87,7 @@ async function cmdCheckPasskey(session: Session, userPrincipal: string | undefin
 async function cmdPrepare(session: Session, userPrincipal: string | undefined): Promise<void> {
   if (!userPrincipal) {
     console.error('Error: user principal ID is required');
-    console.error('Usage: zcloak-social bind prepare <user_principal>');
+    console.error('Usage: zcloak-ai bind prepare <user_principal>');
     process.exit(1);
   }
 
