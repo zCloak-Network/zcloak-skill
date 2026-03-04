@@ -33,4 +33,6 @@ export interface AppConfig {
   bind_url: UrlConfig;
   /** Agent profile page URL prefix */
   profile_url: UrlConfig;
+  /** 2FA verification page URL */
+  twofa_url: UrlConfig;
 }

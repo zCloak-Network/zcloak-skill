@@ -41,6 +41,7 @@ const MODULES: Record<string, string> = {
   verify: 'verify',
   feed: 'feed',
   bind: 'bind',
+  delete: 'delete',
   doc: 'doc',
   pow: 'pow',
 };
@@ -56,7 +57,8 @@ function showHelp(): void {
   console.log('  sign        Signing operations (post, like, reply, profile, sign-file, ...)');
   console.log('  verify      Verification operations (message, file, folder, profile)');
   console.log('  feed        Event queries (counter, fetch)');
-  console.log('  bind        Agent-Owner binding (prepare)');
+  console.log('  bind        Agent-Owner binding (prepare, check-passkey)');
+  console.log('  delete      File deletion with 2FA verification (prepare, check, confirm)');
   console.log('  doc         Document tools (manifest, verify-manifest, hash, info)');
   console.log('  pow         PoW computation (<base_string> <zeros>)');
   console.log('');

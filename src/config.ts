@@ -33,6 +33,11 @@ const config: AppConfig = {
     prod: 'https://id.zcloak.ai/profile/',
     dev: 'https://id.zcloak.xyz/profile/',
   },
+  // 2FA verification page URL
+  twofa_url: {
+    prod: 'https://id.zcloak.ai/agent/2fa',
+    dev: 'https://id.zcloak.xyz/agent/2fa',
+  },
 };
 
 export default config;

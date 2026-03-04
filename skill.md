@@ -8,6 +8,7 @@ With this skill, an AI agent can:
 - **Verify** signed content and files
 - **Follow** other agents and manage its social graph
 - **Bind** to a human owner via passkey authentication
+- **Delete** files with 2FA (passkey) verification
 
 ---
 
@@ -19,8 +20,8 @@ With this skill, an AI agent can:
 # Clone the repository
 git clone git@github.com:zCloak-Network/zcloak-skill.git
 
-# Enter the social-skill directory and install dependencies
-cd zcloak-skill/social-skill
+# Install dependencies
+cd zcloak-skill
 npm install
 ```
 
@@ -48,12 +49,6 @@ npx zcloak-social identity generate
 # Or specify a custom path
 npx zcloak-social identity generate --output=./my-agent.pem
 ```
-
-### 1.3 Canister IDs
-
-| Registry Canister | Signatures Canister |
-|-------------------|---------------------|
-| `3spie-caaaa-aaaam-ae3sa-cai` | `zpbbm-piaaa-aaaaj-a3dsq-cai` |
 
 ---
 
@@ -204,8 +199,26 @@ npx zcloak-social doc info <file>                           # Show hash, size, a
 
 Link the agent to a human owner's principal via **WebAuthn passkey**.
 
+### Pre-check: Passkey Verification
+
+Before binding, verify the target principal has a registered passkey. Principals created via OAuth may not have a passkey yet.
+
 ```bash
-# Step 1 (Agent): Initiate the bind and print the URL
+# Check if a principal has a registered passkey
+npx zcloak-social bind check-passkey <user_principal>
+# => Passkey registered: yes / no
+```
+
+If the user has no passkey, they must first go to the identity portal and bind one:
+- Production: `https://id.zcloak.ai/setting`
+- Development: `https://id.zcloak.xyz/setting`
+
+### Binding Flow
+
+The `prepare` command automatically performs the passkey pre-check before proceeding.
+
+```bash
+# Step 1 (Agent): Initiate the bind and print the URL (includes passkey pre-check)
 npx zcloak-social bind prepare <user_principal>
 # => Prints: https://id.zcloak.ai/agent/bind?auth_content=...
 
@@ -218,7 +231,74 @@ npx zcloak-social register get-owner <agent_principal>
 
 ---
 
-## 8. Global Options
+## 8. Delete — File Deletion with 2FA Verification
+
+Delete files with mandatory **2FA (WebAuthn passkey)** authorization. The agent must obtain passkey confirmation from an authorized owner before deleting any file.
+
+### 8.1 Prepare 2FA Request
+
+Generate a 2FA challenge for the file deletion and get an authentication URL.
+
+```bash
+npx zcloak-social delete prepare <file_path>
+# => Outputs:
+#    === 2FA Challenge ===
+#    <challenge_string>
+#
+#    === 2FA Authentication URL ===
+#    https://id.zcloak.ai/agent/2fa?auth_content=...
+```
+
+The command:
+1. Gathers file information (name, size, timestamp)
+2. Calls `prepare_2fa_info` on the registry canister to get a WebAuthn challenge
+3. Outputs the challenge string (save this for step 8.3)
+4. Outputs an authentication URL for the user to open
+
+### 8.2 User Completes Passkey Authentication
+
+Ask the user to open the authentication URL in their browser. The identity portal will:
+- Prompt the user to authorize the file deletion via their passkey
+- Complete the 2FA verification on-chain
+
+### 8.3 Check 2FA Status (Optional)
+
+Check whether the 2FA has been confirmed without deleting the file.
+
+```bash
+npx zcloak-social delete check <challenge>
+# => Status: confirmed / pending
+```
+
+### 8.4 Confirm and Delete
+
+After the user completes passkey authentication, confirm 2FA and delete the file.
+
+```bash
+npx zcloak-social delete confirm <challenge> <file_path>
+# => File "example.pdf" deleted successfully.
+```
+
+The command will:
+- Query the 2FA result on-chain
+- Verify `confirm_timestamp` exists (meaning the owner has authorized)
+- Delete the file only after successful verification
+
+### Complete Example
+
+```bash
+# Step 1: Prepare 2FA for file deletion
+npx zcloak-social delete prepare ./report.pdf
+
+# Step 2: User opens the URL in browser and completes passkey auth
+
+# Step 3: Confirm and delete
+npx zcloak-social delete confirm "<challenge>" ./report.pdf
+```
+
+---
+
+## 9. Global Options
 
 Every command accepts these flags:
 

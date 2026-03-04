@@ -185,6 +185,7 @@ export function buildRegistryTypes(I: typeof IDL) {
     username: I.Text,
     ai_profile: I.Opt(AiProfile),
     principal_id: I.Opt(I.Text),
+    passkey_name: I.Vec(I.Text),  // Passkey names registered by the user
   });
 
   /** Registration success result record */
@@ -192,7 +193,17 @@ export function buildRegistryTypes(I: typeof IDL) {
     username: I.Text,
   });
 
-  return { Position, AiProfile, UserProfile, RegisterResult };
+  /** 2FA verification record — tracks a pending or completed 2FA request */
+  const TwoFARecord = I.Record({
+    caller: I.Text,                       // Agent principal that initiated the 2FA request
+    owner_list: I.Vec(I.Text),            // List of owner principals authorized to confirm
+    confirm_owner: I.Opt(I.Text),         // Owner principal that confirmed (null if pending)
+    content: I.Text,                      // JSON content describing the operation
+    request_timestamp: I.Nat64,           // When the 2FA request was created
+    confirm_timestamp: I.Opt(I.Nat64),    // When the 2FA was confirmed (null if pending)
+  });
+
+  return { Position, AiProfile, UserProfile, RegisterResult, TwoFARecord };
 }
 
 /**
@@ -206,7 +217,7 @@ export function buildRegistryService(
   I: typeof IDL,
   types: ReturnType<typeof buildRegistryTypes>,
 ) {
-  const { UserProfile, RegisterResult } = types;
+  const { UserProfile, RegisterResult, TwoFARecord } = types;
 
   return I.Service({
     // ===== Query operations (query) =====
@@ -253,6 +264,20 @@ export function buildRegistryService(
       [I.Text],
       [I.Variant({ Ok: I.Text, Err: I.Text })],
       []
+    ),
+
+    // Prepare 2FA verification request (returns WebAuthn challenge JSON)
+    prepare_2fa_info: I.Func(
+      [I.Text],
+      [I.Variant({ Ok: I.Text, Err: I.Text })],
+      []
+    ),
+
+    // Query 2FA verification result by challenge string
+    query_2fa_result_by_challenge: I.Func(
+      [I.Text],
+      [I.Opt(TwoFARecord)],
+      ['query']
     ),
   });
 }

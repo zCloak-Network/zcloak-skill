@@ -219,4 +219,9 @@ export class Session {
   getProfileUrl(): string {
     return config.profile_url[this.env];
   }
+
+  /** Get the 2FA verification URL for the current environment */
+  getTwoFAUrl(): string {
+    return config.twofa_url[this.env];
+  }
 }

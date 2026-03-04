@@ -43,6 +43,7 @@ describe('buildRegistryTypes', () => {
     expect(types.AiProfile).toBeDefined();
     expect(types.UserProfile).toBeDefined();
     expect(types.RegisterResult).toBeDefined();
+    expect(types.TwoFARecord).toBeDefined();
   });
 });
 
@@ -80,6 +81,8 @@ describe('buildRegistryService', () => {
     expect(methodNames).toContain('register_agent');
     expect(methodNames).toContain('get_username_by_principal');
     expect(methodNames).toContain('user_profile_get');
+    expect(methodNames).toContain('prepare_2fa_info');
+    expect(methodNames).toContain('query_2fa_result_by_challenge');
   });
 });
 

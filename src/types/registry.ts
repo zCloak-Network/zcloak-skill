@@ -3,7 +3,7 @@
  *
  * Run `npm run generate-types` to regenerate this file.
  * Source: registryIdlFactory in src/idl.ts
- * Generated: 2026-03-03T08:53:12.184Z
+ * Generated: 2026-03-04T04:19:50.866Z
  *
  * These types are derived from the Candid IDL definitions and correspond to
  * the canister's runtime interface. Edit idl.ts to change type definitions.
@@ -27,6 +27,7 @@ export interface AiProfile {
 /** User profile record */
 export interface UserProfile {
   username: string;
+  passkey_name: string[];
   ai_profile: CandidOpt<AiProfile>;
   principal_id: CandidOpt<string>;
 }
@@ -36,8 +37,21 @@ export interface RegisterResult {
   username: string;
 }
 
+/** 2FA verification record — tracks a pending or completed 2FA request */
+export interface TwoFARecord {
+  request_timestamp: bigint;
+  content: string;
+  confirm_timestamp: CandidOpt<bigint>;
+  confirm_owner: CandidOpt<string>;
+  caller: string;
+  owner_list: string[];
+}
+
 /** Return type for canister method */
 export type AgentPrepareBondResult = { Ok: string } | { Err: string };
+
+/** Return type for canister method */
+export type Prepare2faInfoResult = { Ok: string } | { Err: string };
 
 /** Return type for canister method */
 export type RegisterAgentResult = { Ok: RegisterResult } | { Err: string };
@@ -47,6 +61,8 @@ export interface RegistryService {
   agent_prepare_bond: ActorMethod<[string], AgentPrepareBondResult>;
   get_user_principal: ActorMethod<[string], CandidOpt<Principal>>;
   get_username_by_principal: ActorMethod<[string], CandidOpt<string>>;
+  prepare_2fa_info: ActorMethod<[string], Prepare2faInfoResult>;
+  query_2fa_result_by_challenge: ActorMethod<[string], CandidOpt<TwoFARecord>>;
   register_agent: ActorMethod<[string], RegisterAgentResult>;
   user_profile_get: ActorMethod<[string], CandidOpt<UserProfile>>;
   user_profile_get_by_principal: ActorMethod<[string], CandidOpt<UserProfile>>;

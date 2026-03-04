@@ -4,10 +4,12 @@
  *
  * Executes the agent-owner WebAuthn/passkey binding flow.
  * Automatically calls agent_prepare_bond and generates browser authentication URL.
+ * Includes passkey pre-check to ensure the target user has a registered passkey.
  * Uses @dfinity JS SDK to interact directly with ICP canister, no dfx required.
  *
  * Usage:
- *   zcloak-social bind prepare <user_principal>     Prepare binding and generate authentication URL
+ *   zcloak-social bind prepare <user_principal>         Prepare binding and generate authentication URL
+ *   zcloak-social bind check-passkey <user_principal>   Check if a principal has a registered passkey
  *
  * All commands support --env=dev to switch environments.
  * All commands support --identity=<pem_path> to specify identity file.
@@ -20,22 +22,73 @@ function showHelp(): void {
   console.log('zCloak.ai Agent-Owner Binding Tool');
   console.log('');
   console.log('Usage:');
-  console.log('  zcloak-social bind prepare <user_principal>     Prepare binding and generate authentication URL');
+  console.log('  zcloak-social bind prepare <user_principal>         Prepare binding and generate authentication URL');
+  console.log('  zcloak-social bind check-passkey <user_principal>   Check if a principal has a registered passkey');
   console.log('');
   console.log('Options:');
   console.log('  --env=prod|dev            Select environment (default: prod)');
   console.log('  --identity=<pem_path>     Specify identity PEM file');
   console.log('');
   console.log('Flow:');
-  console.log('  1. Script calls agent_prepare_bond to get WebAuthn challenge');
-  console.log('  2. Script generates authentication URL');
-  console.log('  3. User opens the URL in browser and completes authentication with passkey');
+  console.log('  1. Script checks if target principal has a registered passkey (pre-check)');
+  console.log('  2. Script calls agent_prepare_bond to get WebAuthn challenge');
+  console.log('  3. Script generates authentication URL');
+  console.log('  4. User opens the URL in browser and completes authentication with passkey');
   console.log('');
   console.log('Examples:');
   console.log('  zcloak-social bind prepare "57odc-ymip7-b7edu-aevpq-nu54m-q4paq-vsrtd-nlnmm-lkos3-d4h3t-7qe"');
+  console.log('  zcloak-social bind check-passkey "57odc-ymip7-b7edu-aevpq-nu54m-q4paq-vsrtd-nlnmm-lkos3-d4h3t-7qe"');
+}
+
+// ========== Passkey Pre-check Helper ==========
+
+/**
+ * Check if a principal has a registered passkey via user_profile_get_by_principal.
+ * Returns true if the user has at least one passkey, false otherwise.
+ * Throws if the principal is not found in the registry.
+ */
+async function hasPasskey(session: Session, userPrincipal: string): Promise<boolean> {
+  const actor = await session.getAnonymousRegistryActor();
+  const profile = await actor.user_profile_get_by_principal(userPrincipal);
+
+  // opt UserProfile — empty array means no profile found
+  if (!profile || profile.length === 0) {
+    throw new Error(`No user profile found for principal: ${userPrincipal}`);
+  }
+
+  const user = profile[0]!;
+  // passkey_name is a vec text — empty vec means no passkey registered
+  return user.passkey_name.length > 0;
 }
 
 // ========== Command Implementations ==========
+
+/** Check if a principal has a registered passkey (standalone command) */
+async function cmdCheckPasskey(session: Session, userPrincipal: string | undefined): Promise<void> {
+  if (!userPrincipal) {
+    console.error('Error: user principal ID is required');
+    console.error('Usage: zcloak-social bind check-passkey <user_principal>');
+    process.exit(1);
+  }
+
+  console.error('Checking passkey status...');
+  const result = await hasPasskey(session, userPrincipal);
+
+  if (result) {
+    console.log('Passkey registered: yes');
+    console.log('This principal is ready for agent binding.');
+  } else {
+    // Determine the identity portal URL based on environment
+    const settingUrl = session.env === 'prod'
+      ? 'https://id.zcloak.ai/setting'
+      : 'https://id.zcloak.xyz/setting';
+
+    console.log('Passkey registered: no');
+    console.log('');
+    console.log('This principal was created via OAuth and has no passkey yet.');
+    console.log(`Please go to ${settingUrl} and bind a passkey first.`);
+  }
+}
 
 /** Prepare binding and generate authentication URL */
 async function cmdPrepare(session: Session, userPrincipal: string | undefined): Promise<void> {
@@ -44,6 +97,21 @@ async function cmdPrepare(session: Session, userPrincipal: string | undefined): 
     console.error('Usage: zcloak-social bind prepare <user_principal>');
     process.exit(1);
   }
+
+  // Pre-check: ensure the target principal has a passkey before proceeding
+  console.error('Pre-check: verifying passkey status...');
+  const passkeyOk = await hasPasskey(session, userPrincipal);
+  if (!passkeyOk) {
+    const settingUrl = session.env === 'prod'
+      ? 'https://id.zcloak.ai/setting'
+      : 'https://id.zcloak.xyz/setting';
+
+    console.error('Error: target principal has no passkey registered.');
+    console.error('This principal was created via OAuth and has no passkey yet.');
+    console.error(`Please go to ${settingUrl} and bind a passkey for this user first.`);
+    process.exit(1);
+  }
+  console.error('Pre-check passed: passkey found.');
 
   const bindBase = session.getBindUrl();
 
@@ -86,6 +154,9 @@ export async function run(session: Session): Promise<void> {
     switch (command) {
       case 'prepare':
         await cmdPrepare(session, session.args._args[1]);
+        break;
+      case 'check-passkey':
+        await cmdCheckPasskey(session, session.args._args[1]);
         break;
       default:
         showHelp();

@@ -8,8 +8,8 @@ CLI tool for [zCloak.ai](https://zcloak.ai) AI agents — register, sign, verify
 # Clone the repository
 git clone git@github.com:zCloak-Network/zcloak-skill.git
 
-# Enter the social-skill directory and install dependencies
-cd zcloak-skill/social-skill
+# Install dependencies
+cd zcloak-skill
 npm install
 ```
 

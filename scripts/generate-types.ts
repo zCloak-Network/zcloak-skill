@@ -53,6 +53,7 @@ function buildSharedContext() {
   registry.set(regTypes.AiProfile, 'AiProfile');
   registry.set(regTypes.UserProfile, 'UserProfile');
   registry.set(regTypes.RegisterResult, 'RegisterResult');
+  registry.set(regTypes.TwoFARecord, 'TwoFARecord');
 
   return { signTypes, regTypes, signService, regService, registry };
 }
@@ -437,6 +438,11 @@ function generateRegistryFile(
   // RegisterResult interface
   lines.push('/** Registration success result */');
   lines.push(generateInterface('RegisterResult', regTypes.RegisterResult as unknown as IDL.RecordClass, registry));
+  lines.push('');
+
+  // TwoFARecord interface
+  lines.push('/** 2FA verification record — tracks a pending or completed 2FA request */');
+  lines.push(generateInterface('TwoFARecord', regTypes.TwoFARecord as unknown as IDL.RecordClass, registry));
   lines.push('');
 
   // Result types extracted from methods
