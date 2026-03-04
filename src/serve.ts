@@ -23,6 +23,7 @@
 import { createServer, type Socket } from 'net';
 import { createInterface } from 'readline';
 import { readFileSync, writeFileSync, statSync } from 'fs';
+import type { Readable, Writable } from 'stream';
 import { KeyStore } from './key-store';
 import { DaemonRuntime } from './daemon';
 import {
@@ -494,13 +495,19 @@ export function runDaemonUds(
  * @param keyStore - AES-256 key holder (consumed; destroyed on exit)
  * @param principal - Authenticated principal text
  * @param derivationId - Derivation ID used for the key
+ * @param input - Optional input stream (defaults to process.stdin, override for testing)
+ * @param output - Optional output stream (defaults to process.stdout, override for testing)
  */
 export function runDaemonStdio(
   keyStore: KeyStore,
   principal: string,
   derivationId: string,
+  input?: Readable,
+  output?: Writable,
 ): Promise<void> {
   return new Promise<void>((resolve) => {
+    const stdin = input ?? process.stdin;
+    const stdout = output ?? process.stdout;
     const startedAt = new Date().toISOString();
 
     // Emit ready signal to stdout (same format as Rust version)
@@ -510,10 +517,10 @@ export function runDaemonStdio(
       principal,
       started_at: startedAt,
     });
-    process.stdout.write(readyMsg + "\n");
+    stdout.write(readyMsg + "\n");
 
-    // Read stdin line by line
-    const rl = createInterface({ input: process.stdin });
+    // Read input line by line
+    const rl = createInterface({ input: stdin });
 
     rl.on("line", (line: string) => {
       if (!line.trim()) return; // Skip blank lines
@@ -521,7 +528,7 @@ export function runDaemonStdio(
       // Parse the request
       const parsed = parseRpcRequest(line);
       if (isErrorResponse(parsed)) {
-        process.stdout.write(JSON.stringify(parsed) + "\n");
+        stdout.write(JSON.stringify(parsed) + "\n");
         return;
       }
 
@@ -534,7 +541,7 @@ export function runDaemonStdio(
         "stdio",
       );
 
-      process.stdout.write(JSON.stringify(response) + "\n");
+      stdout.write(JSON.stringify(response) + "\n");
 
       if (action === "shutdown" || action === "quit") {
         // In stdio mode, both quit and shutdown stop the daemon
