@@ -305,11 +305,17 @@ async function cmdDecrypt(session: Session): Promise<void> {
  */
 async function cmdEncryptOnly(session: Session): Promise<void> {
   const args = session.args;
-  const text = args['text'] as string | undefined;
-  const file = args['file'] as string | undefined;
-  const ibeIdentityOverride = args['ibe-identity'] as string | undefined;
-  const publicKeyHex = args['public-key'] as string | undefined;
+  const text = args['text'] as string | boolean | undefined;
+  const file = args['file'] as string | boolean | undefined;
+  const rawIbeIdentity = args['ibe-identity'];
+  const rawPublicKey = args['public-key'];
   const jsonOutput = !!args['json'];
+
+  // Guard against boolean flags for string-valued options
+  if (rawIbeIdentity === true) throw new Error("--ibe-identity requires a value");
+  if (rawPublicKey === true) throw new Error("--public-key requires a hex value");
+  const ibeIdentityOverride = rawIbeIdentity as string | undefined;
+  const publicKeyHex = rawPublicKey as string | undefined;
 
   const plaintext = readInput(text, file);
 
@@ -393,7 +399,10 @@ async function cmdGetPubkey(session: Session): Promise<void> {
  */
 async function cmdServe(session: Session): Promise<void> {
   const args = session.args;
-  const keyName = (args['key-name'] as string) || 'default';
+  const rawKeyName = args['key-name'];
+  // Guard against boolean flag (e.g. --key-name --stdio parses --key-name as true)
+  if (rawKeyName === true) throw new Error("--key-name requires a value (e.g. --key-name=mykey)");
+  const keyName = (rawKeyName as string) || 'default';
   const stdio = !!args['stdio'];
 
   // Validate key_name
@@ -425,6 +434,7 @@ async function cmdServe(session: Session): Promise<void> {
  */
 async function cmdStop(session: Session): Promise<void> {
   const args = session.args;
+  if (args['key-name'] === true) throw new Error("--key-name requires a value (e.g. --key-name=mykey)");
   const keyName = (args['key-name'] as string) || 'default';
   const jsonOutput = !!args['json'];
 
@@ -450,6 +460,7 @@ async function cmdStop(session: Session): Promise<void> {
  */
 async function cmdStatus(session: Session): Promise<void> {
   const args = session.args;
+  if (args['key-name'] === true) throw new Error("--key-name requires a value (e.g. --key-name=mykey)");
   const keyName = (args['key-name'] as string) || 'default';
   const jsonOutput = !!args['json'];
 
@@ -491,8 +502,11 @@ async function cmdStatus(session: Session): Promise<void> {
  * Read input content from --text or --file as Uint8Array.
  * Supports both text and binary files.
  */
-function readInput(text: string | undefined, file: string | undefined): Uint8Array {
+function readInput(text: string | boolean | undefined, file: string | boolean | undefined): Uint8Array {
   if (text && file) throw new Error("Cannot specify both --text and --file");
+  // Guard against boolean flags (e.g. --text --other-flag parses --text as true)
+  if (text === true) throw new Error("--text requires a value (e.g. --text='hello')");
+  if (file === true) throw new Error("--file requires a path (e.g. --file=./data.txt)");
   if (text) return new TextEncoder().encode(text);
   if (file) return readFileSync(file);
   throw new Error("Either --text or --file must be provided");
