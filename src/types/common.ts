@@ -40,7 +40,7 @@ export interface ManifestOptions {
 
 /** MANIFEST generation result */
 export interface ManifestResult {
-  /** MANIFEST.sha256 file path */
+  /** MANIFEST.md file path */
   manifestPath: string;
   /** SHA256 hash of the MANIFEST file itself */
   manifestHash: string;
@@ -50,7 +50,7 @@ export interface ManifestResult {
   fileCount: number;
 }
 
-/** Single file entry parsed from a MANIFEST.sha256 file */
+/** Single file entry parsed from a MANIFEST.md file */
 export interface ManifestEntry {
   /** Expected SHA256 hash (64-character hex string) */
   expectedHash: string;

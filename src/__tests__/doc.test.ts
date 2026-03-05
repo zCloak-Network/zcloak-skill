@@ -108,17 +108,17 @@ describe('doc info command', () => {
 });
 
 describe('doc manifest command', () => {
-  it('generates MANIFEST.sha256 and outputs stats', () => {
+  it('generates MANIFEST.md and outputs stats', () => {
     fs.writeFileSync(path.join(tmpDir, 'a.txt'), 'aaa');
     fs.writeFileSync(path.join(tmpDir, 'b.txt'), 'bbb');
 
     const session = new Session(['node', 'doc.js', 'manifest', tmpDir]);
     run(session);
 
-    // Verify MANIFEST.sha256 was created
-    expect(fs.existsSync(path.join(tmpDir, 'MANIFEST.sha256'))).toBe(true);
+    // Verify MANIFEST.md was created
+    expect(fs.existsSync(path.join(tmpDir, 'MANIFEST.md'))).toBe(true);
 
-    expect(mockLog).toHaveBeenCalledWith(expect.stringContaining('MANIFEST.sha256 generated'));
+    expect(mockLog).toHaveBeenCalledWith(expect.stringContaining('MANIFEST.md generated'));
     expect(mockLog).toHaveBeenCalledWith(expect.stringContaining('File count: 2'));
   });
 
@@ -169,10 +169,10 @@ describe('doc verify-manifest command', () => {
     expect(mockLog).toHaveBeenCalledWith(expect.stringContaining('FAILED: test.txt'));
   });
 
-  it('exits with error when MANIFEST.sha256 is missing', () => {
+  it('exits with error when MANIFEST.md is missing', () => {
     const session = new Session(['node', 'doc.js', 'verify-manifest', tmpDir]);
 
     expect(() => run(session)).toThrow('process.exit called');
-    expect(mockError).toHaveBeenCalledWith(expect.stringContaining('MANIFEST.sha256 not found'));
+    expect(mockError).toHaveBeenCalledWith(expect.stringContaining('MANIFEST.md not found'));
   });
 });

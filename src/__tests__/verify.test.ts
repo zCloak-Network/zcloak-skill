@@ -134,11 +134,11 @@ describe('verify file command', () => {
 });
 
 describe('verify folder command', () => {
-  it('exits with error when MANIFEST.sha256 is missing', async () => {
+  it('exits with error when MANIFEST.md is missing', async () => {
     const session = mockSession(['folder', tmpDir]);
 
     await expect(run(session)).rejects.toThrow('process.exit called');
-    expect(mockError).toHaveBeenCalledWith(expect.stringContaining('MANIFEST.sha256 not found'));
+    expect(mockError).toHaveBeenCalledWith(expect.stringContaining('MANIFEST.md not found'));
   });
 
   it('exits with error when folder does not exist', async () => {
@@ -154,10 +154,10 @@ describe('verify folder command', () => {
     const filePath = path.join(tmpDir, 'data.txt');
     fs.writeFileSync(filePath, fileContent);
 
-    // Create valid MANIFEST.sha256
+    // Create valid MANIFEST.md
     const fileHash = crypto.createHash('sha256').update(fileContent).digest('hex');
     const manifestContent = `# skill: test\n${fileHash}  ./data.txt\n`;
-    fs.writeFileSync(path.join(tmpDir, 'MANIFEST.sha256'), manifestContent);
+    fs.writeFileSync(path.join(tmpDir, 'MANIFEST.md'), manifestContent);
 
     const session = mockSession(['folder', tmpDir]);
 
@@ -177,7 +177,7 @@ describe('verify folder command', () => {
     fs.writeFileSync(path.join(tmpDir, 'data.txt'), 'content');
     const wrongHash = 'a'.repeat(64);
     const manifestContent = `${wrongHash}  ./data.txt\n`;
-    fs.writeFileSync(path.join(tmpDir, 'MANIFEST.sha256'), manifestContent);
+    fs.writeFileSync(path.join(tmpDir, 'MANIFEST.md'), manifestContent);
 
     const session = mockSession(['folder', tmpDir]);
 

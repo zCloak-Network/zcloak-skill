@@ -264,9 +264,9 @@ describe('listFiles', () => {
     expect(files).toContain('sub/nested.txt');
   });
 
-  it('excludes MANIFEST.sha256, .git, and node_modules', () => {
+  it('excludes MANIFEST.md, .git, and node_modules', () => {
     fs.writeFileSync(path.join(tmpDir, 'keep.txt'), 'k');
-    fs.writeFileSync(path.join(tmpDir, 'MANIFEST.sha256'), 'manifest');
+    fs.writeFileSync(path.join(tmpDir, 'MANIFEST.md'), 'manifest');
     fs.mkdirSync(path.join(tmpDir, '.git'));
     fs.writeFileSync(path.join(tmpDir, '.git', 'config'), 'git');
     fs.mkdirSync(path.join(tmpDir, 'node_modules'));

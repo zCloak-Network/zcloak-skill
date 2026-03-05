@@ -1,5 +1,5 @@
 /**
- * Tests for utils.ts generateManifest() — MANIFEST.sha256 file generation
+ * Tests for utils.ts generateManifest() — MANIFEST.md file generation
  *
  * Covers: file listing, hash computation, metadata header, version, fileCount
  */
@@ -22,11 +22,11 @@ afterEach(() => {
 });
 
 describe('generateManifest', () => {
-  it('creates MANIFEST.sha256 file in the target folder', () => {
+  it('creates MANIFEST.md file in the target folder', () => {
     fs.writeFileSync(path.join(tmpDir, 'a.txt'), 'hello');
 
     const result = generateManifest(tmpDir);
-    const manifestPath = path.join(tmpDir, 'MANIFEST.sha256');
+    const manifestPath = path.join(tmpDir, 'MANIFEST.md');
     expect(fs.existsSync(manifestPath)).toBe(true);
     expect(result.manifestPath).toBe(manifestPath);
   });
@@ -44,7 +44,7 @@ describe('generateManifest', () => {
     fs.writeFileSync(path.join(tmpDir, 'test.txt'), 'data');
 
     generateManifest(tmpDir, { version: '2.0.0' });
-    const content = fs.readFileSync(path.join(tmpDir, 'MANIFEST.sha256'), 'utf-8');
+    const content = fs.readFileSync(path.join(tmpDir, 'MANIFEST.md'), 'utf-8');
 
     expect(content).toContain('# skill:');
     expect(content).toContain('# date:');
@@ -56,7 +56,7 @@ describe('generateManifest', () => {
     fs.writeFileSync(path.join(tmpDir, 'test.txt'), 'data');
 
     generateManifest(tmpDir);
-    const content = fs.readFileSync(path.join(tmpDir, 'MANIFEST.sha256'), 'utf-8');
+    const content = fs.readFileSync(path.join(tmpDir, 'MANIFEST.md'), 'utf-8');
 
     expect(content).toContain('# version: 1.0.0');
   });
@@ -66,7 +66,7 @@ describe('generateManifest', () => {
     fs.writeFileSync(path.join(tmpDir, 'test.txt'), fileContent);
 
     generateManifest(tmpDir);
-    const content = fs.readFileSync(path.join(tmpDir, 'MANIFEST.sha256'), 'utf-8');
+    const content = fs.readFileSync(path.join(tmpDir, 'MANIFEST.md'), 'utf-8');
 
     const expectedHash = crypto.createHash('sha256').update(fileContent).digest('hex');
     expect(content).toContain(`${expectedHash}  ./test.txt`);
@@ -102,10 +102,10 @@ describe('generateManifest', () => {
     expect(content).toContain('./sub/nested.txt');
   });
 
-  it('excludes MANIFEST.sha256, .git, and node_modules', () => {
+  it('excludes MANIFEST.md, .git, and node_modules', () => {
     fs.writeFileSync(path.join(tmpDir, 'keep.txt'), 'k');
     // Pre-existing MANIFEST should be excluded from listing
-    fs.writeFileSync(path.join(tmpDir, 'MANIFEST.sha256'), 'old');
+    fs.writeFileSync(path.join(tmpDir, 'MANIFEST.md'), 'old');
     fs.mkdirSync(path.join(tmpDir, '.git'));
     fs.writeFileSync(path.join(tmpDir, '.git', 'config'), 'git');
     fs.mkdirSync(path.join(tmpDir, 'node_modules'));

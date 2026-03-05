@@ -298,15 +298,15 @@ describe('sign sign-folder (Kind 11)', () => {
 
     await run(session);
 
-    // MANIFEST.sha256 should have been generated
-    expect(fs.existsSync(path.join(tmpDir, 'MANIFEST.sha256'))).toBe(true);
+    // MANIFEST.md should have been generated
+    expect(fs.existsSync(path.join(tmpDir, 'MANIFEST.md'))).toBe(true);
 
     const actor = await session.getSignActor();
     const callArgs = (actor.agent_sign as any).mock.calls[0][0];
     expect(callArgs.Kind11DocumentSignature).toBeDefined();
 
     const content = JSON.parse(callArgs.Kind11DocumentSignature.content);
-    expect(content.title).toBe('MANIFEST.sha256');
+    expect(content.title).toBe('MANIFEST.md');
   });
 
   it('exits with error when folder does not exist', async () => {

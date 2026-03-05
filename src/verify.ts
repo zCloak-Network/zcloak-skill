@@ -9,7 +9,7 @@
  * Usage:
  *   zcloak-ai verify message <content>            Verify message content
  *   zcloak-ai verify file <file_path>             Verify single file signature
- *   zcloak-ai verify folder <folder_path>         Verify folder signature (MANIFEST.sha256)
+ *   zcloak-ai verify folder <folder_path>         Verify folder signature (MANIFEST.md)
  *   zcloak-ai verify profile <principal>          Query Kind 1 identity profile
  *
  * All commands support --identity=<pem_path> to specify identity file.
@@ -33,7 +33,7 @@ function showHelp(): void {
   console.log('Usage:');
   console.log('  zcloak-ai verify message <content>        Verify message content');
   console.log('  zcloak-ai verify file <file_path>         Verify single file signature');
-  console.log('  zcloak-ai verify folder <folder_path>     Verify folder signature (MANIFEST.sha256)');
+  console.log('  zcloak-ai verify folder <folder_path>     Verify folder signature (MANIFEST.md)');
   console.log('  zcloak-ai verify profile <principal>      Query Kind 1 identity profile');
   console.log('');
   console.log('');
@@ -128,7 +128,7 @@ async function cmdVerifyFile(session: Session, filePath: string | undefined): Pr
   await resolveSigners(session, events);
 }
 
-/** Verify folder signature (MANIFEST.sha256) */
+/** Verify folder signature (MANIFEST.md) */
 async function cmdVerifyFolder(session: Session, folderPath: string | undefined): Promise<void> {
   if (!folderPath) {
     console.error('Error: folder path is required');
@@ -140,9 +140,9 @@ async function cmdVerifyFolder(session: Session, folderPath: string | undefined)
     process.exit(1);
   }
 
-  const manifestPath = path.join(folderPath, 'MANIFEST.sha256');
+  const manifestPath = path.join(folderPath, 'MANIFEST.md');
   if (!fs.existsSync(manifestPath)) {
-    console.error(`Error: MANIFEST.sha256 not found: ${manifestPath}`);
+    console.error(`Error: MANIFEST.md not found: ${manifestPath}`);
     process.exit(1);
   }
 

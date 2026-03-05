@@ -2,12 +2,12 @@
 /**
  * zCloak.ai Document Tool
  *
- * Provides MANIFEST.sha256 generation, verification, file hash computation, and more.
+ * Provides MANIFEST.md generation, verification, file hash computation, and more.
  * Pure Node.js implementation, cross-platform compatible, no external shell commands required.
  *
  * Usage:
- *   zcloak-ai doc manifest <folder_path> [--version=1.0.0]    Generate MANIFEST.sha256 (with metadata header)
- *   zcloak-ai doc verify-manifest <folder_path>               Verify file integrity in MANIFEST.sha256
+ *   zcloak-ai doc manifest <folder_path> [--version=1.0.0]    Generate MANIFEST.md (with metadata header)
+ *   zcloak-ai doc verify-manifest <folder_path>               Verify file integrity in MANIFEST.md
  *   zcloak-ai doc hash <file_path>                            Compute single file SHA256 hash
  *   zcloak-ai doc info <file_path>                            Show file hash, size, MIME, etc.
  */
@@ -29,7 +29,7 @@ function showHelp(): void {
   console.log('zCloak.ai Document Tool');
   console.log('');
   console.log('Usage:');
-  console.log('  zcloak-ai doc manifest <folder_path> [--version=1.0.0]   Generate MANIFEST.sha256');
+  console.log('  zcloak-ai doc manifest <folder_path> [--version=1.0.0]   Generate MANIFEST.md');
   console.log('  zcloak-ai doc verify-manifest <folder_path>              Verify file integrity');
   console.log('  zcloak-ai doc hash <file_path>                           Compute SHA256 hash');
   console.log('  zcloak-ai doc info <file_path>                           Show file details');
@@ -47,7 +47,7 @@ function showHelp(): void {
 // ========== Command Implementations ==========
 
 /**
- * Generate MANIFEST.sha256 (with metadata header)
+ * Generate MANIFEST.md (with metadata header)
  * Format compatible with GNU sha256sum, metadata represented as # comment lines
  */
 function cmdManifest(folderPath: string | undefined, args: ParsedArgs): void {
@@ -65,7 +65,7 @@ function cmdManifest(folderPath: string | undefined, args: ParsedArgs): void {
 
   try {
     const result = generateManifest(folderPath, { version });
-    console.log(`MANIFEST.sha256 generated: ${result.manifestPath}`);
+    console.log(`MANIFEST.md generated: ${result.manifestPath}`);
     console.log(`File count: ${result.fileCount}`);
     console.log(`Version: ${version}`);
     console.log(`MANIFEST SHA256: ${result.manifestHash}`);
@@ -77,7 +77,7 @@ function cmdManifest(folderPath: string | undefined, args: ParsedArgs): void {
 }
 
 /**
- * Verify file integrity in MANIFEST.sha256
+ * Verify file integrity in MANIFEST.md
  * Uses shared MANIFEST parser from utils.ts for consistent parsing and strict validation
  */
 function cmdVerifyManifest(folderPath: string | undefined): void {
@@ -86,9 +86,9 @@ function cmdVerifyManifest(folderPath: string | undefined): void {
     process.exit(1);
   }
 
-  const manifestPath = path.join(folderPath, 'MANIFEST.sha256');
+  const manifestPath = path.join(folderPath, 'MANIFEST.md');
   if (!fs.existsSync(manifestPath)) {
-    console.error(`Error: MANIFEST.sha256 not found: ${manifestPath}`);
+    console.error(`Error: MANIFEST.md not found: ${manifestPath}`);
     process.exit(1);
   }
 
@@ -116,7 +116,7 @@ function cmdVerifyManifest(folderPath: string | undefined): void {
   // Output MANIFEST hash (for subsequent on-chain verification)
   const manifestHash = hashFile(manifestPath);
   console.log(`\nMANIFEST SHA256: ${manifestHash}`);
-  console.log('(Use this hash for on-chain signature verification: zcloak-ai verify file MANIFEST.sha256)');
+  console.log('(Use this hash for on-chain signature verification: zcloak-ai verify file MANIFEST.md)');
 }
 
 /** Compute single file SHA256 hash */

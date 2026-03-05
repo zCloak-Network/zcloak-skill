@@ -190,7 +190,7 @@ export function getMimeType(filePath: string): string {
 // ========== MANIFEST Generation ==========
 
 /**
- * Recursively list all files in a directory (excluding MANIFEST.sha256, .git, node_modules)
+ * Recursively list all files in a directory (excluding MANIFEST.md, .git, node_modules)
  * @param dir - Directory path
  * @param prefix - Path prefix (for recursion)
  * @returns Sorted list of relative paths
@@ -203,8 +203,8 @@ export function listFiles(dir: string, prefix?: string): string[] {
   for (const entry of entries) {
     const relativePath = effectivePrefix ? `${effectivePrefix}/${entry.name}` : entry.name;
 
-    // Exclude MANIFEST.sha256, .git, and node_modules
-    if (entry.name === 'MANIFEST.sha256') continue;
+    // Exclude MANIFEST.md, .git, and node_modules
+    if (entry.name === 'MANIFEST.md') continue;
     if (entry.name === '.git') continue;
     if (entry.name === 'node_modules') continue;
 
@@ -219,7 +219,7 @@ export function listFiles(dir: string, prefix?: string): string[] {
 }
 
 /**
- * Generate MANIFEST.sha256 file (with metadata header)
+ * Generate MANIFEST.md file (with metadata header)
  * Format compatible with GNU sha256sum, metadata represented as # comment lines
  *
  * This version uses pure Node.js implementation, no shell command dependency.
@@ -227,7 +227,7 @@ export function listFiles(dir: string, prefix?: string): string[] {
  */
 export function generateManifest(folderPath: string, options?: ManifestOptions): ManifestResult {
   const version = options?.version || '1.0.0';
-  const manifestPath = path.join(folderPath, 'MANIFEST.sha256');
+  const manifestPath = path.join(folderPath, 'MANIFEST.md');
 
   // Get author (current principal, if a PEM file is available).
   // Identity is optional for MANIFEST generation — leave author empty if unavailable.
@@ -258,7 +258,7 @@ export function generateManifest(folderPath: string, options?: ManifestOptions):
     return `${hash}  ./${relativePath}`;
   });
 
-  // Write MANIFEST.sha256
+  // Write MANIFEST.md
   const content = header + '\n' + hashLines.join('\n') + '\n';
   fs.writeFileSync(manifestPath, content, 'utf-8');
 
@@ -272,14 +272,14 @@ export function generateManifest(folderPath: string, options?: ManifestOptions):
 // ========== MANIFEST Parsing & Verification ==========
 
 /**
- * Parse MANIFEST.sha256 file content into structured entries.
+ * Parse MANIFEST.md file content into structured entries.
  *
  * Skips comment lines (starting with #) and empty lines.
  * Each valid line must match: <64-hex-hash> <whitespace> <path>
  * Non-empty non-comment lines that don't match this format cause an error
  * (strict mode — prevents silently ignoring corrupted MANIFEST content).
  *
- * @param manifestContent - Full text content of the MANIFEST.sha256 file
+ * @param manifestContent - Full text content of the MANIFEST.md file
  * @returns Array of parsed ManifestEntry objects
  * @throws {Error} If a non-empty non-comment line has invalid format
  */
@@ -317,7 +317,7 @@ export function parseManifestEntries(manifestContent: string): ManifestEntry[] {
  *
  * Returns structured results; the caller decides how to format output.
  *
- * @param manifestContent - MANIFEST.sha256 file content
+ * @param manifestContent - MANIFEST.md file content
  * @param basePath - Absolute path of the folder containing the files
  * @returns Array of verification results, one per file entry
  * @throws {Error} If the MANIFEST format is invalid

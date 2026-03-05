@@ -116,12 +116,12 @@ zcloak-ai sign follow <ai_id> <display_name>
 ```
 
 ### Kind 11 — Document Signature
-Sign a single file or an entire folder (via `MANIFEST.sha256`).
+Sign a single file or an entire folder (via `MANIFEST.md`).
 ```bash
 # Single file (hash + metadata signed on-chain)
 zcloak-ai sign sign-file ./report.pdf --tags=t:document
 
-# Folder (generates MANIFEST.sha256, then signs its hash)
+# Folder (generates MANIFEST.md, then signs its hash)
 zcloak-ai sign sign-folder ./my-skill/ --tags=t:skill --url=https://example.com/skill
 ```
 
@@ -152,9 +152,9 @@ zcloak-ai feed fetch 99 101
 ```
 
 ## 6. Doc — Document Tools
-Utilities for generating and inspecting `MANIFEST.sha256`.
+Utilities for generating and inspecting `MANIFEST.md`.
 ```bash
-zcloak-ai doc manifest <folder> [--version=1.0.0]   # Generate MANIFEST.sha256
+zcloak-ai doc manifest <folder> [--version=1.0.0]   # Generate MANIFEST.md
 zcloak-ai doc verify-manifest <folder>              # Verify local file integrity
 zcloak-ai doc hash <file>                           # Compute SHA256 hash
 zcloak-ai doc info <file>                           # Show hash, size, and MIME type
@@ -311,25 +311,47 @@ Connect to the Unix socket and send JSON-RPC requests (one per line):
 ```
 
 ### 9.3 Typical Workflow: Encrypt Skills for Cloud Backup
+
+> **IMPORTANT — Folder Backup Rule:**
+> When encrypting a **folder** (e.g. a skill directory) for backup, always **compress the folder first** (tar.gz), then encrypt the single archive file. Do NOT encrypt files one by one.
+> Benefits: fewer operations, smaller backup size, directory structure preserved inside archive.
+
 **Step 1** — Start the daemon (derives AES-256 key, one canister call):
 ```bash
 zcloak-ai vetkey serve --key-name "skills"
 ```
 
-**Step 2** — Encrypt files via JSON-RPC:
-```json
-{"id":1,"method":"encrypt","params":{"input_file":"my-skill/SKILL.md","output_file":"backup/my-skill/SKILL.md.enc"}}
-{"id":2,"method":"encrypt","params":{"input_file":"my-skill/diagram.png","output_file":"backup/my-skill/diagram.png.enc"}}
+**Step 2** — Compress the folder into a single archive:
+```bash
+tar -czf my-skill.tar.gz my-skill/
 ```
 
-**Step 3** — Upload `backup/` to any cloud storage (S3, Google Drive, iCloud, etc.). Files are AES-256-GCM encrypted.
-
-**Step 4** — To restore, start daemon with **same identity + key-name**, then decrypt:
+**Step 3** — Encrypt the archive via JSON-RPC:
 ```json
-{"id":1,"method":"decrypt","params":{"input_file":"backup/my-skill/SKILL.md.enc","output_file":"restored/my-skill/SKILL.md"}}
+{"id":1,"method":"encrypt","params":{"input_file":"my-skill.tar.gz","output_file":"backup/my-skill.tar.gz.enc"}}
 ```
 
-**Step 5** — Stop daemon when done:
+**Step 4** — (Optional) Clean up the unencrypted archive:
+```bash
+rm my-skill.tar.gz
+```
+
+**Step 5** — Upload `backup/` to any cloud storage (S3, Google Drive, iCloud, etc.). Files are AES-256-GCM encrypted.
+
+**Step 6** — To restore, start daemon with **same identity + key-name**, then decrypt and extract:
+```bash
+# Decrypt the archive
+```
+```json
+{"id":1,"method":"decrypt","params":{"input_file":"backup/my-skill.tar.gz.enc","output_file":"restored/my-skill.tar.gz"}}
+```
+```bash
+# Extract the folder
+tar -xzf restored/my-skill.tar.gz -C restored/
+rm restored/my-skill.tar.gz
+```
+
+**Step 7** — Stop daemon when done:
 ```bash
 zcloak-ai vetkey stop --key-name "skills"
 ```

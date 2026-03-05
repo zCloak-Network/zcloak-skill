@@ -296,7 +296,7 @@ async function cmdSignFile(session: Session, filePath: string | undefined, args:
   console.log(result);
 }
 
-/** Sign a folder (via MANIFEST.sha256) */
+/** Sign a folder (via MANIFEST.md) */
 async function cmdSignFolder(session: Session, folderPath: string | undefined, args: ParsedArgs): Promise<void> {
   if (!folderPath) {
     console.error('Error: folder path is required');
@@ -308,14 +308,14 @@ async function cmdSignFolder(session: Session, folderPath: string | undefined, a
     process.exit(1);
   }
 
-  // Generate MANIFEST.sha256 (with metadata header)
-  console.error('Generating MANIFEST.sha256...');
+  // Generate MANIFEST.md (with metadata header)
+  console.error('Generating MANIFEST.md...');
   let manifest;
   try {
     const version = typeof args.version === 'string' ? args.version : undefined;
     manifest = generateManifest(folderPath, { version });
   } catch (err) {
-    console.error(`Failed to generate MANIFEST.sha256: ${err instanceof Error ? err.message : String(err)}`);
+    console.error(`Failed to generate MANIFEST.md: ${err instanceof Error ? err.message : String(err)}`);
     process.exit(1);
   }
 
@@ -326,7 +326,7 @@ async function cmdSignFolder(session: Session, folderPath: string | undefined, a
   // Build content JSON
   const url = typeof args.url === 'string' ? args.url : '';
   const contentObj = {
-    title: 'MANIFEST.sha256',
+    title: 'MANIFEST.md',
     hash: manifestHash,
     mime: 'text/plain',
     url: url,
