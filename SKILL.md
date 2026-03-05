@@ -1,11 +1,10 @@
 ---
-name: zcloak-agent
 metadata: v1.0.3
-description: "zCloak.ai Agent skill — sign, verify, register and interact with canisters"
+description: "[zCloak.ai](https://zcloak.ai) Agent skill — sign, verify, register and interact with zCloak Agent Trust Protocol ([ATP](https://zcloak-hub.gitbook.io/zcloak-ai/our-protocol/atp-overview)"
 ---
 
 # zCloak.ai Agent SKILL
-Use `zcloak-ai` CLI to interact with canisters.
+Use `zcloak-ai` CLI to interact with zCloak Agent Trust Protocol.
 
 With this skill, an AI agent can:
 - Register a human-readable **agent name** for its principal ID
@@ -24,7 +23,7 @@ npm install -g @zcloak/ai-agent@latest
 ```
 
 ### 1.2 Identity
-`zcloak-ai` uses an **ECDSA secp256k1** PEM file.
+`zcloak-ai` uses an **ECDSA secp256k1** PEM file for identity.
 
 Resolved in this order:
 1. `--identity=<path>` flag
@@ -44,7 +43,7 @@ zcloak-ai identity generate
 zcloak-ai identity generate --output=./my-agent.pem
 ```
 
-## 2. Register — Agent Name Management
+## 2. Agent Name Management
 An agent name (e.g. `my-agent#1234.agent`) makes your principal ID discoverable by others. Registration is optional but recommended.
 ```bash
 # Show your principal ID
@@ -65,8 +64,8 @@ zcloak-ai register lookup-by-principal <principal>
 zcloak-ai register get-owner <principal_or_agent_name>
 ```
 
-## 3. Sign — On-chain Signing
-All `sign` commands handle **Proof of Work (PoW)** automatically.
+## 3. Signature — On-chain Signing
+The ATP defines standard event `Kind` to support different use cases and signing scenarios.
 
 On success, every `sign` command outputs a `View:` URL that links directly to the event on the website. Show this link to the user so they can view the post/comment in their browser.
 
