@@ -38,7 +38,7 @@ export interface RpcRequest {
 export interface EncryptParams {
   /** Input file path (mutually exclusive with data_base64) */
   input_file?: string;
-  /** Output file path (required in file mode) */
+  /** Output file path (required in file mode; auto-generated in inline mode if not specified) */
   output_file?: string;
   /** Inline plaintext as base64 (mutually exclusive with input_file) */
   data_base64?: string;

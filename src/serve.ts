@@ -23,6 +23,8 @@
 import { createServer, type Socket } from 'net';
 import { createInterface } from 'readline';
 import { readFileSync, writeFileSync, statSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 import type { Readable, Writable } from 'stream';
 import { KeyStore } from './key-store.js';
 import { DaemonRuntime } from './daemon.js';
@@ -197,7 +199,17 @@ function handleEncrypt(
       return { error: `Encryption failed: ${e instanceof Error ? e.message : String(e)}` };
     }
 
+    // Write ciphertext to output file (use provided path or auto-generate)
+    const outputFile = params.output_file
+      ?? join(tmpdir(), `vetkey_encrypted_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.enc`);
+    try {
+      writeFileSync(outputFile, ciphertext);
+    } catch (e) {
+      return { error: `Failed to write '${outputFile}': ${e instanceof Error ? e.message : String(e)}` };
+    }
+
     return {
+      output_file: outputFile,
       data_base64: ciphertext.toString("base64"),
       plaintext_size: plaintextSize,
       ciphertext_size: ciphertext.length,

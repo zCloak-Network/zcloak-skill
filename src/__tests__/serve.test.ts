@@ -174,6 +174,10 @@ describe('UDS Daemon', () => {
     const encResult = encResp.result as Record<string, unknown>;
     expect(encResult.data_base64).toBeDefined();
     expect(encResult.plaintext_size).toBe(23); // "Hello, encrypted world!" = 23 bytes
+    // Inline mode should also return output_file with auto-generated path
+    expect(encResult.output_file).toBeDefined();
+    expect(typeof encResult.output_file).toBe('string');
+    expect(existsSync(encResult.output_file as string)).toBe(true);
 
     // Decrypt
     const decResp = await sendRpc(sockPath, {
@@ -185,6 +189,9 @@ describe('UDS Daemon', () => {
     const decResult = decResp.result as Record<string, unknown>;
     const decrypted = Buffer.from(decResult.data_base64 as string, 'base64').toString('utf-8');
     expect(decrypted).toBe('Hello, encrypted world!');
+
+    // Cleanup auto-generated encrypted file
+    try { unlinkSync(encResult.output_file as string); } catch { /* ignore */ }
 
     // Shutdown
     await sendRpc(sockPath, { id: 99, method: 'shutdown' });
@@ -332,6 +339,9 @@ describe('Stdio Daemon', () => {
     expect(encResp.error).toBeUndefined();
     const encResult = encResp.result as Record<string, unknown>;
     expect(encResult.data_base64).toBeDefined();
+    // Inline mode should also return output_file with auto-generated path
+    expect(encResult.output_file).toBeDefined();
+    expect(typeof encResult.output_file).toBe('string');
 
     // Decrypt
     input.write(JSON.stringify({ id: 2, method: 'decrypt', params: { data_base64: encResult.data_base64 } }) + '\n');
@@ -341,6 +351,9 @@ describe('Stdio Daemon', () => {
     const decResult = decResp.result as Record<string, unknown>;
     const decrypted = Buffer.from(decResult.data_base64 as string, 'base64').toString('utf-8');
     expect(decrypted).toBe('stdio encrypt test');
+
+    // Cleanup auto-generated encrypted file
+    try { unlinkSync(encResult.output_file as string); } catch { /* ignore */ }
 
     // Quit
     input.write('{"id":99,"method":"quit"}\n');

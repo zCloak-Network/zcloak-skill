@@ -142,6 +142,7 @@ async function cmdEncryptSign(session: Session): Promise<void> {
   const args = session.args;
   const text = args['text'] as string | undefined;
   const file = args['file'] as string | undefined;
+  const output = args['output'] as string | undefined;
   const tagsJson = args['tags'] as string | undefined;
   const jsonOutput = !!args['json'];
 
@@ -193,7 +194,11 @@ async function cmdEncryptSign(session: Session): Promise<void> {
     );
   }
 
-  // Step 5: Output
+  // Step 5: Write ciphertext to local file
+  const outputPath = output ?? defaultEncryptedPath(file);
+  writeFileSync(outputPath, ciphertext);
+
+  // Step 6: Output
   if (jsonOutput) {
     console.log(JSON.stringify({
       event_id: signEvent.id,
@@ -202,6 +207,8 @@ async function cmdEncryptSign(session: Session): Promise<void> {
       content_hash: signEvent.content_hash,
       created_at: signEvent.created_at.toString(),
       principal,
+      output_file: outputPath,
+      ciphertext_size: ciphertext.length,
     }));
   } else {
     console.log("Kind5 PrivatePost signed successfully!");
@@ -209,6 +216,8 @@ async function cmdEncryptSign(session: Session): Promise<void> {
     console.log(`  IBE Identity: ${ibeIdentity}`);
     console.log(`  Content Hash: ${signEvent.content_hash}`);
     console.log(`  Principal:    ${principal}`);
+    console.log(`  Output File:  ${outputPath}`);
+    console.log(`  Ciphertext:   ${ciphertext.length} bytes`);
   }
 }
 
@@ -307,6 +316,7 @@ async function cmdEncryptOnly(session: Session): Promise<void> {
   const args = session.args;
   const text = args['text'] as string | boolean | undefined;
   const file = args['file'] as string | boolean | undefined;
+  const output = args['output'] as string | undefined;
   const rawIbeIdentity = args['ibe-identity'];
   const rawPublicKey = args['public-key'];
   const jsonOutput = !!args['json'];
@@ -344,10 +354,14 @@ async function cmdEncryptOnly(session: Session): Promise<void> {
   const ibeIdentity = ibeIdentityOverride ?? cryptoOps.makeIbeIdentity(principalText, plaintext);
   const ciphertext = cryptoOps.ibeEncrypt(dpkBytes, ibeIdentity, plaintext);
 
+  // Write ciphertext to local file
+  const outputPath = output ?? defaultEncryptedPath(typeof file === 'string' ? file : undefined);
+  writeFileSync(outputPath, ciphertext);
+
   if (jsonOutput) {
     console.log(JSON.stringify({
       ibe_identity: ibeIdentity,
-      ciphertext_hex: Buffer.from(ciphertext).toString("hex"),
+      output_file: outputPath,
       ciphertext_size: ciphertext.length,
       plaintext_size: plaintext.length,
       offline: !!publicKeyHex,
@@ -356,8 +370,8 @@ async function cmdEncryptOnly(session: Session): Promise<void> {
     const mode = publicKeyHex ? "fully offline" : "semi-online";
     console.log(`IBE encryption completed (${mode}, not signed on canister)`);
     console.log(`  IBE Identity:    ${ibeIdentity}`);
+    console.log(`  Output File:     ${outputPath}`);
     console.log(`  Ciphertext size: ${ciphertext.length} bytes`);
-    console.log(`  Ciphertext (hex): ${Buffer.from(ciphertext).toString("hex")}`);
   }
 }
 
@@ -497,6 +511,18 @@ async function cmdStatus(session: Session): Promise<void> {
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+/**
+ * Generate default output path for encrypted files.
+ * - If an input file was provided, appends ".enc" suffix (e.g. "data.txt" → "data.txt.enc")
+ * - If no input file (e.g. --text mode), generates a timestamped file in the current directory
+ */
+function defaultEncryptedPath(inputFile?: string): string {
+  if (inputFile) {
+    return `${inputFile}.enc`;
+  }
+  return `encrypted_${Date.now()}.enc`;
+}
 
 /**
  * Read input content from --text or --file as Uint8Array.
