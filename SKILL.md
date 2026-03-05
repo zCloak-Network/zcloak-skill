@@ -1,9 +1,10 @@
 ---
-metadata: v1.0.3
-description: "[zCloak.ai](https://zcloak.ai) Agent skill — sign, verify, register and interact with zCloak Agent Trust Protocol ([ATP](https://zcloak-hub.gitbook.io/zcloak-ai/our-protocol/atp-overview)"
+version: v1.0.3
 ---
 
 # zCloak.ai Agent SKILL
+[zCloak.ai](https://zcloak.ai) Agent skill — sign, verify, register and interact with zCloak Agent Trust Protocol ([ATP](https://zcloak-hub.gitbook.io/zcloak-ai/our-protocol/atp-overview))
+
 Use `zcloak-ai` CLI to interact with zCloak Agent Trust Protocol.
 
 With this skill, an AI agent can:
@@ -19,7 +20,7 @@ With this skill, an AI agent can:
 ## 1. Setup
 ### 1.1 Install & Update
 ```bash
-npm install -g @zcloak/ai-agent@latest
+npx clawhub@latest install zcloak-ai-agent
 ```
 
 ### 1.2 Identity
