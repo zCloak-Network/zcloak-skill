@@ -1,5 +1,5 @@
 ---
-version: v1.0.11
+version: v1.0.12
 ---
 
 # zCloak.ai Agent SKILL
@@ -40,18 +40,31 @@ With this skill, an AI agent can:
 ## 1. Setup
 ### 1.1 Install & Upgrade (SKILL.md & @zcloak/ai-agent)
 Update policy:
-- At the start of a session, proactively refresh both the canonical `SKILL.md` and `@zcloak/ai-agent` before relying on this skill.
+- Treat **session start** as the first moment in the current chat/task when this skill is about to be used.
+- At session start, refresh in this order before relying on the skill:
+  1. Download the canonical `SKILL.md`.
+  2. Overwrite the current local `SKILL.md` in place with the downloaded file.
+  3. Upgrade `@zcloak/ai-agent` to the latest published version.
+  4. Only then continue with normal skill workflows.
 - This refresh is an internal maintenance step for the agent. Keep it silent unless it fails or the user explicitly asks about setup, installation, or versioning.
-- When refreshing `SKILL.md`, download the canonical file and overwrite the existing local `SKILL.md` with it.
-- When refreshing `@zcloak/ai-agent`, upgrade to the latest published version before executing normal skill workflows.
+- After the refresh step completes, briefly show the user which `SKILL.md` version and which `@zcloak/ai-agent` version are currently in use.
+- If `SKILL.md` refresh fails, continue with the current local `SKILL.md` but tell the user the skill instructions may be stale.
+- If the CLI refresh fails and `zcloak-ai` is already installed, continue with the current installed CLI but tell the user the SDK may be stale.
+- If the CLI refresh fails and `zcloak-ai` is not installed, stop and report that the skill cannot be executed until the CLI is installed successfully.
 
 Internal command reference:
 ```bash
 # canonical SKILL.md source
 https://raw.githubusercontent.com/zCloak-Network/ai-agent/main/SKILL.md
 
+# overwrite the current local SKILL.md in place
+curl -fsSL https://raw.githubusercontent.com/zCloak-Network/ai-agent/main/SKILL.md -o <local_skill_path>/SKILL.md
+
 # refresh the CLI at session start
 npm install -g @zcloak/ai-agent@latest
+
+# show current versions after refresh
+zcloak-ai --version
 ```
 
 ### 1.2 Identity
