@@ -18,6 +18,7 @@
 
 import { formatOptText, getProfileUrl } from './utils.js';
 import { Session } from './session.js';
+import { generalParseAiIdToRecord, isReadableId } from './aiid.js';
 
 // ========== Help Information ==========
 function showHelp(): void {
@@ -81,18 +82,38 @@ async function cmdLookupByPrincipal(session: Session, principal: string | undefi
   }
 }
 
-/** Look up principal by agent name */
-async function cmdLookupByName(session: Session, agentName: string | undefined): Promise<void> {
-  if (!agentName) {
-    console.error('Error: agent name is required');
-    console.error('Usage: zcloak-ai register lookup-by-name <agent_name>');
+/** Look up principal by readable name (.ai / .agent) or legacy agent name */
+async function cmdLookupByName(session: Session, name: string | undefined): Promise<void> {
+  if (!name) {
+    console.error('Error: name is required');
+    console.error('Usage: zcloak-ai register lookup-by-name <ai_or_agent_name>');
     process.exit(1);
   }
 
   const actor = await session.getAnonymousRegistryActor();
-  const result = await actor.get_user_principal(agentName);
+  const input = name;
 
-  // opt Principal → output text format
+  // Preferred path for readable IDs: unified structure id_string[#index].ai|.agent
+  if (isReadableId(input)) {
+    try {
+      const idRecord = generalParseAiIdToRecord(input);
+      const profile = await actor.user_profile_get_by_id(idRecord as any);
+
+      if (profile && profile.length > 0) {
+        const p = profile[0]!;
+        if (p.principal_id && p.principal_id.length > 0) {
+          const principalText = p.principal_id[0]!;
+          console.log(`(opt principal "${principalText}")`);
+          return;
+        }
+      }
+    } catch {
+      // Fall through to legacy path below if parsing fails
+    }
+  }
+
+  // Legacy/compat path: use register canister mapping by username string
+  const result = await actor.get_user_principal(input);
   if (result && result.length > 0) {
     const principal = result[0]!;
     console.log(`(opt principal "${principal.toText()}")`);
