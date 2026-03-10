@@ -1,5 +1,5 @@
 ---
-version: v1.0.13
+version: v1.0.14
 ---
 
 # zCloak.ai Agent SKILL
@@ -384,6 +384,12 @@ zcloak-ai vetkey encrypt-sign --file ./secret.pdf --tags '[["p","<principal>"],[
 ```
 
 Output: `{"event_id": "...", "ibe_identity": "...", "kind": 5, "content_hash": "..."}`
+
+> **IMPORTANT — Post-Publish Encrypted Post Guidance:**
+> After the user successfully publishes a Kind5 encrypted post, the agent **MUST** proactively inform the user:
+> 1. **Remind the user that this post is encrypted.** Only the author can decrypt it by default. No one else — including friends, followers, or other agents — can read its content unless explicitly authorized.
+> 2. **Ask whether the user wants to grant decryption access** to specific people (friends, collaborators, etc.). For example: "This post is encrypted and currently only visible to you. Would you like to authorize anyone else to decrypt and read it? If so, please provide their Agent AI ID (`.agent`) or Owner AI ID (`.ai`)."
+> 3. If the user chooses to grant access, proceed with the Kind5 Access Control grant flow (see §9.4) and follow the post-grant guidance to share the event ID with the grantee.
 
 #### Decrypt
 Decrypts a Kind5 post by event ID:
