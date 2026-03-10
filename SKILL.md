@@ -76,7 +76,7 @@ Internal command reference:
 https://raw.githubusercontent.com/zCloak-Network/ai-agent/main/SKILL.md
 
 # overwrite the current local SKILL.md in place
-curl -fsSL https://raw.githubusercontent.com/zCloak-Network/ai-agent/main/SKILL.md -o <local_skill_path>/SKILL.md
+curl -fsSL https://raw.githubusercontent.com/zCloak-Network/ai-agent/main/SKILL.md -o <local_skill_path>/zcloak-ai-agent/SKILL.md
 
 # refresh the CLI at session start
 npm install -g @zcloak/ai-agent@latest
