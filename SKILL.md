@@ -1,5 +1,5 @@
 ---
-version: v1.0.10
+version: v1.0.11
 ---
 
 # zCloak.ai Agent SKILL
@@ -11,6 +11,8 @@ Use the `zcloak-ai` CLI (`@zcloak/ai-agent`) to interact with zCloak Agent Trust
 - **Principal / Principal ID**: The raw ICP identity string derived from a PEM private key, such as `rnk7r-h5pex-bqbjr-x42yi-76bsl-c4mzs-jtcux-zhwvu-tikt7-ezkn3-hae`.
 - **Owner AI ID (`.ai`)**: A human owner's readable ID, such as `alice.ai`.
 - **Agent AI ID (`.agent`)**: An agent's readable ID, such as `runner#8939.agent`.
+- **Free Agent AI ID**: An Agent AI ID with `#`, such as `runner#8939.agent`.
+- **Paid Agent AI ID**: An Agent AI ID without `#`, such as `runner.agent`.
 - **Readable ID**: A human-friendly identifier. In this skill, that means either an Owner AI ID (`.ai`) or an Agent AI ID (`.agent`) depending on context.
 
 With this skill, an AI agent can:
@@ -79,6 +81,8 @@ Recommended onboarding behavior:
 - Report the current Principal ID.
 - Check whether the agent already has an owner binding.
 - If no owner is bound, proactively tell the user that binding an owner enables passkey authorization and protected actions.
+- If the agent does not yet have an Agent AI ID, recommend registering a free Agent AI ID first. Free Agent AI IDs include `#`, such as `runner#8939.agent`.
+- If the user later wants a cleaner Agent AI ID without `#`, explain that this is a paid Agent AI ID and can be handled after owner binding.
 - If the human user's Principal ID is already known, prepare the bind flow and return the authentication URL.
 - If the human user's Owner AI ID (`.ai`) is already known, use it directly for binding. The CLI resolves it automatically.
 - Only ask the user for an identifier when they have provided neither a Principal ID nor an Owner AI ID (`.ai`).
@@ -93,10 +97,13 @@ zcloak-ai identity generate --identity=~/.config/zcloak/ai-id.pem
 zcloak-ai identity generate --output=./my-agent.pem
 ```
 
-## 2. Agent Name Management
-An Agent AI ID (e.g. `my-agent#1234.agent`) makes your Principal ID discoverable by others. Registration is optional but recommended for agents that need a public identity.
+## 2. Agent ID Management
+An Agent AI ID (e.g. `my-agent#1234.agent`) makes your Principal ID discoverable by others. 
 
-Run these lookups or registrations on the user's behalf, then summarize the outcome in plain language. Report the registered Agent AI ID, resolved Principal ID, or owner-binding result instead of echoing the command.
+
+Registration guidance:
+- If the user does not already have an Agent AI ID, recommend registering a free Agent AI ID first. In practice this means a `.agent` ID with `#`, such as `runner#8939.agent`.
+- After owner binding is complete, you may explain that the owner can later pay for a cleaner Agent AI ID without `#` if they want one.
 
 Internal command reference:
 ```bash
@@ -106,7 +113,7 @@ zcloak-ai register get-principal
 # Look up your own Agent AI ID
 zcloak-ai register lookup
 
-# Register a new Agent AI ID (canister appends a discriminator like #1234)
+# Register a new Free Agent AI ID (canister appends a discriminator like #1234)
 zcloak-ai register register my-agent
 # => (variant { Ok = record { username = "my-agent#1234.agent" } })
 
