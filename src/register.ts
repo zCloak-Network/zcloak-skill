@@ -16,7 +16,7 @@
  * All commands support --identity=<pem_path> to specify identity file.
  */
 
-import { formatOptText, getProfileUrl } from './utils.js';
+import { getProfileUrl } from './utils.js';
 import { Session } from './session.js';
 import { generalParseAiIdToRecord, isReadableId } from './aiid.js';
 
@@ -41,6 +41,49 @@ function showHelp(): void {
   console.log('  zcloak-ai register lookup-by-name "runner#8939.agent"');
 }
 
+// ========== Helpers ==========
+
+/**
+ * Format a Candid ID record { id, index, domain } into a readable AI ID string.
+ * e.g. { id:"francis", index:[1012n], domain:[{AGENT:null}] } → "francis#1012.agent"
+ *      { id:"alice",   index:[],     domain:[{AI:null}]    } → "alice.ai"
+ */
+function formatIdRecord(idRecord: {
+  id: string;
+  index: [] | [bigint];
+  domain: [] | [{ AI: null } | { ORG: null } | { AGENT: null }];
+}): string {
+  let text = idRecord.id;
+  if (idRecord.index && idRecord.index.length > 0) {
+    text += `#${idRecord.index[0]!.toString()}`;
+  }
+  if (idRecord.domain && idRecord.domain.length > 0) {
+    const d = idRecord.domain[0]!;
+    if ('AI' in d)    text += '.ai';
+    else if ('ORG' in d)   text += '.org';
+    else if ('AGENT' in d) text += '.agent';
+  }
+  return text;
+}
+
+/**
+ * Extract the best AI ID string from a UserProfile.
+ * Priority: ai_profile.ai_name → ai_profile.default_name → null
+ */
+function extractAiIdFromProfile(profile: {
+  ai_profile: [] | [{ ai_name: [] | [any]; default_name: [] | [any] }];
+}): string | null {
+  if (!profile.ai_profile || profile.ai_profile.length === 0) return null;
+  const ap = profile.ai_profile[0]!;
+  const idRecord =
+    ap.ai_name && ap.ai_name.length > 0
+      ? ap.ai_name[0]!
+      : ap.default_name && ap.default_name.length > 0
+        ? ap.default_name[0]!
+        : null;
+  return idRecord ? formatIdRecord(idRecord) : null;
+}
+
 // ========== Command Implementations ==========
 
 /** Get current identity's principal ID (read from PEM file) */
@@ -55,12 +98,19 @@ async function cmdLookup(session: Session): Promise<void> {
   console.error(`Current principal: ${principal}`);
 
   const actor = await session.getAnonymousRegistryActor();
-  const result = await actor.get_username_by_principal(principal);
-  console.log(formatOptText(result));
+  const result = await actor.user_profile_get_by_principal(principal);
 
-  // If agent name found, show the profile page URL for convenience
-  if (result && result.length > 0) {
-    console.log(`View profile: ${getProfileUrl(result[0]!)}`);
+  if (!result || result.length === 0) {
+    console.log('(null)');
+    return;
+  }
+
+  const aiId = extractAiIdFromProfile(result[0]!);
+  if (aiId) {
+    console.log(`(opt "${aiId}")`);
+    console.log(`View profile: ${getProfileUrl(aiId)}`);
+  } else {
+    console.log('(null)');
   }
 }
 
@@ -73,12 +123,21 @@ async function cmdLookupByPrincipal(session: Session, principal: string | undefi
   }
 
   const actor = await session.getAnonymousRegistryActor();
-  const result = await actor.get_username_by_principal(principal);
-  console.log(formatOptText(result));
+  // Use user_profile_get_by_principal to get full profile, then extract AI ID from ai_profile
+  const result = await actor.user_profile_get_by_principal(principal);
 
-  // If agent name found, show the profile page URL for convenience
-  if (result && result.length > 0) {
-    console.log(`View profile: ${getProfileUrl(result[0]!)}`);
+  if (!result || result.length === 0) {
+    console.log('(null)');
+    return;
+  }
+
+  // Prefer ai_name over default_name; format as id[#index].domain
+  const aiId = extractAiIdFromProfile(result[0]!);
+  if (aiId) {
+    console.log(`(opt "${aiId}")`);
+    console.log(`View profile: ${getProfileUrl(aiId)}`);
+  } else {
+    console.log('(null)');
   }
 }
 
