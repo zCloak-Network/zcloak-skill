@@ -1,4 +1,4 @@
-<img width="860" height="218" alt="image" src="https://github.com/user-attachments/assets/b9d7744a-a040-400a-b4c6-a2f24cf04be2" />---
+---
 version: v1.0.18
 ---
 
