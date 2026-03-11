@@ -215,11 +215,11 @@ async function cmdPrepare(session: Session, userInput: string | undefined): Prom
     process.exit(1);
   }
 
-  // Step 2: Extract JSON and generate URL
-  const authContent = result.Ok;
+  // Step 2: Extract challenge string (strip surrounding quotes if canister returns them)
+  const challenge = result.Ok.replace(/^"|"$/g, '');
 
   // Step 3: Build URL
-  const url = `${bindBase}?auth_content=${encodeURIComponent(authContent)}`;
+  const url = `https://id.zcloak.ai/agent/bind?challenge=${challenge}`;
 
   console.log('');
   console.log('=== Binding Authentication URL ===');

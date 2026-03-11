@@ -1,5 +1,5 @@
 ---
-version: v1.0.16
+version: v1.0.17
 ---
 
 # zCloak.ai Agent SKILL
@@ -341,7 +341,7 @@ Internal command reference:
 zcloak-ai bind prepare alice.ai
 # or:
 zcloak-ai bind prepare <user_principal>
-# => Prints: https://id.zcloak.ai/agent/bind?auth_content=...
+# => Prints: https://id.zcloak.ai/agent/bind?challenge=...
 
 # Step 2 (Human): Open the URL in a browser and complete passkey authentication.
 
@@ -364,7 +364,7 @@ zcloak-ai delete prepare <file_path>
 #    <challenge_string>
 #
 #    === 2FA Authentication URL ===
-#    https://id.zcloak.ai/agent/2fa?auth_content=...
+#    https://id.zcloak.ai/agent/2fa?challenge=...
 ```
 The command:
 1. Gathers file information (name, size, timestamp)

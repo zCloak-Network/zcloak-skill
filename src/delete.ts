@@ -90,31 +90,17 @@ async function cmdPrepare(session: Session, filePath: string | undefined): Promi
     process.exit(1);
   }
 
-  // Parse the returned WebAuthn challenge JSON
-  const authContent = result.Ok;
-  let challenge: string;
-  try {
-    const parsed = JSON.parse(authContent);
-    challenge = parsed.publicKey?.challenge ?? '';
-    if (!challenge) {
-      throw new Error('challenge field not found in response');
-    }
-  } catch {
-    console.error('Warning: could not extract challenge from response. Save the full response for later use.');
-    challenge = '';
-  }
+  // The returned Ok value is the challenge string (strip surrounding quotes if canister returns them)
+  const challenge = result.Ok.replace(/^"|"$/g, '');
 
   // Build the 2FA authentication URL
-  const twofaBase = session.getTwoFAUrl();
-  const url = `${twofaBase}?auth_content=${encodeURIComponent(authContent)}`;
+  const url = `https://id.zcloak.ai/agent/2fa?challenge=${challenge}`;
 
   // Output challenge for subsequent check/confirm commands
-  if (challenge) {
-    console.log('');
-    console.log('=== 2FA Challenge ===');
-    console.log('');
-    console.log(challenge);
-  }
+  console.log('');
+  console.log('=== 2FA Challenge ===');
+  console.log('');
+  console.log(challenge);
 
   // Output authentication URL
   console.log('');
@@ -123,11 +109,9 @@ async function cmdPrepare(session: Session, filePath: string | undefined): Promi
   console.log(url);
   console.log('');
   console.log('Please open the URL above in your browser and use your passkey to authorize the file deletion.');
-  if (challenge) {
-    console.log('');
-    console.log('After completing authentication, run:');
-    console.log(`  zcloak-ai delete confirm "${challenge}" "${filePath}"`);
-  }
+  console.log('');
+  console.log('After completing authentication, run:');
+  console.log(`  zcloak-ai delete confirm "${challenge}" "${filePath}"`);
 }
 
 /**
