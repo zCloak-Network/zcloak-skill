@@ -109,6 +109,48 @@ function isProcessAlive(pid: number): boolean {
   }
 }
 
+/**
+ * Check whether a daemon for the given derivation ID is alive.
+ *
+ * Unlike `findRunningDaemon()` which throws on missing daemons, this function
+ * returns a simple boolean — suitable for pre-checks where the caller wants to
+ * decide whether to auto-start a daemon without catching exceptions.
+ *
+ * Checks:
+ *   1. PID file exists for the derivation ID
+ *   2. The recorded PID is still alive (kill -0)
+ *   3. Socket file exists (daemon is connectable)
+ *
+ * If stale PID/socket files are found (process dead), they are cleaned up.
+ *
+ * @param derivationId - Full derivation ID (e.g. "{principal}:Mail")
+ * @returns true if the daemon is running and connectable
+ */
+export function isDaemonAlive(derivationId: string): boolean {
+  const pid = pidPath(derivationId);
+  const sock = socketPath(derivationId);
+
+  // No PID file → definitely not running
+  if (!existsSync(pid)) return false;
+
+  try {
+    const pidStr = readFileSync(pid, "utf-8").trim();
+    const existingPid = parseInt(pidStr, 10);
+
+    if (isNaN(existingPid) || !isProcessAlive(existingPid)) {
+      // Process is dead — clean up stale files
+      safeUnlink(pid);
+      safeUnlink(sock);
+      return false;
+    }
+
+    // Process is alive — also verify socket file exists
+    return existsSync(sock);
+  } catch {
+    return false;
+  }
+}
+
 // ============================================================================
 // DaemonRuntime
 // ============================================================================

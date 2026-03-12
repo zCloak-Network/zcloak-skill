@@ -20,11 +20,15 @@ const {
   mockCreateConnection,
   mockCreateInterface,
   mockFindRunningDaemon,
+  mockIsDaemonAlive,
+  mockSocketPath,
   mockIbeEncrypt,
 } = vi.hoisted(() => ({
   mockCreateConnection: vi.fn(),
   mockCreateInterface: vi.fn(({ input }: { input: EventEmitter }) => input),
   mockFindRunningDaemon: vi.fn(() => '/tmp/mail.sock'),
+  mockIsDaemonAlive: vi.fn(() => true),
+  mockSocketPath: vi.fn(() => '/tmp/mail.sock'),
   mockIbeEncrypt: vi.fn(() => new Uint8Array([1, 2, 3, 4])),
 }));
 
@@ -41,6 +45,8 @@ vi.mock('readline', () => ({
 
 vi.mock('../daemon.js', () => ({
   findRunningDaemon: mockFindRunningDaemon,
+  isDaemonAlive: mockIsDaemonAlive,
+  socketPath: mockSocketPath,
 }));
 
 vi.mock('../crypto.js', async (importOriginal) => {

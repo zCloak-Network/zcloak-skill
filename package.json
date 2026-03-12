@@ -11,7 +11,8 @@
   "files": [
     "dist/**/*.js",
     "dist/**/*.d.ts",
-    "dist/**/*.js.map"
+    "dist/**/*.js.map",
+    "SKILL.md"
   ],
   "scripts": {
     "generate-types": "tsx scripts/generate-types.ts",

@@ -24,9 +24,12 @@
  * Usage: zcloak-ai vetkey <sub-command> [options]
  */
 
-import { readFileSync, statSync, writeFileSync } from 'fs';
+import { readFileSync, statSync, writeFileSync, existsSync, mkdirSync, openSync, closeSync } from 'fs';
 import { basename } from 'path';
 import { createConnection } from 'net';
+import { spawn } from 'child_process';
+import { homedir } from 'os';
+import { join } from 'path';
 import { createInterface } from 'readline';
 import { createHash } from 'crypto';
 import { Principal } from '@dfinity/principal';
@@ -36,7 +39,7 @@ import type { Session } from './session.js';
 import * as cryptoOps from './crypto.js';
 import { KeyStore } from './key-store.js';
 import { runDaemonUds, runDaemonStdio } from './serve.js';
-import { findRunningDaemon } from './daemon.js';
+import { findRunningDaemon, isDaemonAlive, socketPath } from './daemon.js';
 import { ToolError, canisterCallError } from './error.js';
 
 // ============================================================================
@@ -525,6 +528,148 @@ async function cmdStatus(session: Session): Promise<void> {
       }
     } else if (response.error) {
       console.error(`Error: ${response.error}`);
+    }
+  }
+}
+
+// ============================================================================
+// Daemon Auto-Start
+// ============================================================================
+
+/** Maximum time to wait for the daemon to become ready (ms) */
+const DAEMON_READY_TIMEOUT_MS = 30_000;
+
+/** Polling interval when waiting for daemon socket to appear (ms) */
+const DAEMON_POLL_INTERVAL_MS = 500;
+
+/** Key names for the two standard daemons that should always be kept alive */
+const STANDARD_DAEMON_KEY_NAMES = ['default', 'Mail'] as const;
+
+/**
+ * Spawn a daemon process in the background for the given key name.
+ *
+ * The child process is fully detached (survives parent exit) with stderr
+ * redirected to a log file under ~/.vetkey-tool/.
+ *
+ * @param pemPath - Path to the identity PEM file
+ * @param keyName - Daemon key name (e.g. "default", "Mail")
+ * @returns The child process PID (or undefined if spawn failed)
+ */
+function spawnDaemonBackground(pemPath: string, keyName: string): number | undefined {
+  const logDir = join(homedir(), '.vetkey-tool');
+  const logPath = join(logDir, `${keyName.toLowerCase()}-daemon.log`);
+
+  try {
+    mkdirSync(logDir, { recursive: true });
+  } catch {
+    // Best effort — directory may already exist
+  }
+
+  let logFd: number;
+  try {
+    logFd = openSync(logPath, 'a');
+  } catch {
+    return undefined;
+  }
+
+  try {
+    const child = spawn('zcloak-ai', [
+      'vetkey', 'serve', `--key-name=${keyName}`, `--identity=${pemPath}`,
+    ], {
+      detached: true,
+      stdio: ['ignore', 'ignore', logFd],
+    });
+
+    // Must listen for 'error' to prevent unhandled ENOENT from crashing the
+    // parent process (e.g. when 'zcloak-ai' is not on PATH).
+    child.on('error', () => { /* swallow — best effort spawn */ });
+
+    child.unref();
+    closeSync(logFd);
+
+    return child.pid;
+  } catch {
+    closeSync(logFd);
+    return undefined;
+  }
+}
+
+/**
+ * Ensure a daemon with the given key name is running for the session's principal.
+ *
+ * If the daemon is already alive, returns the socket path immediately.
+ * Otherwise spawns a background `zcloak-ai vetkey serve` process and
+ * polls until the socket file appears or the timeout is reached.
+ *
+ * @param session  - CLI session (provides identity / PEM path)
+ * @param keyName  - Daemon key name (e.g. "default", "Mail")
+ * @returns Socket path of the running daemon
+ * @throws Error if the daemon fails to start within the timeout
+ */
+async function ensureDaemon(session: Session, keyName: string): Promise<string> {
+  const principal = session.getPrincipal();
+  const derivationId = `${principal}:${keyName}`;
+
+  // Already running? Return immediately.
+  if (isDaemonAlive(derivationId)) {
+    return socketPath(derivationId);
+  }
+
+  console.error(`[zcloak-ai] ${keyName} daemon is not running. Starting it automatically...`);
+
+  const pid = spawnDaemonBackground(session.getPemPath(), keyName);
+  console.error(`[zcloak-ai] ${keyName} daemon spawned (PID: ${pid ?? 'unknown'}). Waiting for ready...`);
+
+  // Poll for the socket file to appear (daemon writes PID + creates socket on ready)
+  const sock = socketPath(derivationId);
+  const logPath = join(homedir(), '.vetkey-tool', `${keyName.toLowerCase()}-daemon.log`);
+  const deadline = Date.now() + DAEMON_READY_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, DAEMON_POLL_INTERVAL_MS));
+
+    if (isDaemonAlive(derivationId) && existsSync(sock)) {
+      console.error(`[zcloak-ai] ${keyName} daemon is ready. Socket: ${sock}`);
+      return sock;
+    }
+  }
+
+  throw new Error(
+    `${keyName} daemon failed to start within ${DAEMON_READY_TIMEOUT_MS / 1000}s. ` +
+    `Check the log at ${logPath} for details.`,
+  );
+}
+
+/**
+ * Background daemon health check — fire-and-forget.
+ *
+ * Called by cli.ts after Session creation to keep both standard daemons
+ * ("default" and "Mail") alive. If a daemon is dead, spawns it in the
+ * background WITHOUT waiting for it to be ready (non-blocking).
+ *
+ * Prerequisites:
+ *   - The PEM file must exist (user has already created an identity)
+ *   - If PEM doesn't exist, silently skips (no identity = no daemon possible)
+ *
+ * All errors are silently swallowed — this is a best-effort health check
+ * and must never block or fail the main command.
+ *
+ * @param pemPath   - Path to the identity PEM file
+ * @param principal - The principal ID derived from the PEM
+ */
+export function ensureDaemonsBackground(pemPath: string, principal: string): void {
+  for (const keyName of STANDARD_DAEMON_KEY_NAMES) {
+    const derivationId = `${principal}:${keyName}`;
+
+    try {
+      if (!isDaemonAlive(derivationId)) {
+        const pid = spawnDaemonBackground(pemPath, keyName);
+        if (pid) {
+          console.error(`[zcloak-ai] ${keyName} daemon was not running — auto-started (PID: ${pid})`);
+        }
+      }
+    } catch {
+      // Silently ignore — daemon health check must never block the main command
     }
   }
 }
@@ -1179,8 +1324,8 @@ async function cmdRecvMsg(session: Session): Promise<void> {
   // Returns true only if full Schnorr signature + principal binding was verified.
   const verifiedSender = verifyKind17Signature(envelope);
 
-  // Connect to daemon and decrypt
-  const sockPath = findRunningDaemon(derivationId);
+  // Ensure Mail daemon is running (auto-start if needed, wait for ready), then decrypt
+  const sockPath = await ensureDaemon(session, 'Mail');
   const response = await sendRpcToSocket(sockPath, {
     id: 1,
     method: 'ibe-decrypt',

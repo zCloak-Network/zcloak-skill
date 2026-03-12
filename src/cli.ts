@@ -30,9 +30,13 @@
  *   zcloak-ai verify file ./report.pdf
  */
 
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Session } from './session.js';
+import { preCheck } from './pre-check.js';
+import { ensureDaemonsBackground } from './vetkey.js';
+import { DEFAULT_PEM_PATH, loadIdentityFromPath } from './identity.js';
 
 /** ESM equivalent of __dirname */
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -100,6 +104,16 @@ function showHelp(): void {
  * so the sub-script receives the same parsed arguments as before.
  */
 async function main(): Promise<void> {
+  // Pre-flight update check: compare local CLI version against npm registry,
+  // auto-update if needed, and prompt re-execution when updates are applied.
+  // SKILL.md is bundled in the npm package, so updating the package covers everything.
+  const checkResult = await preCheck();
+  if (checkResult.updated) {
+    console.error(checkResult.message);
+    // Exit so the agent / user re-runs with the updated CLI binary and SKILL.md.
+    process.exit(0);
+  }
+
   // Get module name (skip node and script path)
   const moduleName = process.argv[2];
 
@@ -126,6 +140,29 @@ async function main(): Promise<void> {
 
   // Create a Session from the constructed argv
   const session = new Session(subArgv);
+
+  // Daemon health check (fire-and-forget): if the user already has a PEM identity,
+  // ensure both standard daemons ("default" and "Mail") are alive in the background.
+  // This is non-blocking — daemons are spawned but we don't wait for them to be ready.
+  // Commands that actually need a daemon (e.g. recv-msg) will wait synchronously.
+  //
+  // Skip when the user is explicitly running `vetkey serve` — the serve command
+  // manages its own daemon lifecycle via DaemonRuntime.create(), and a background
+  // spawn of the same derivation would race with it, causing "Daemon already running".
+  const isVetkeyServe = moduleName === 'vetkey' && process.argv[3] === 'serve';
+  if (!isVetkeyServe) {
+    try {
+      // Use DEFAULT_PEM_PATH directly instead of session.getPemPath() to avoid
+      // auto-creating the PEM file on first run (before `identity generate`).
+      if (fs.existsSync(DEFAULT_PEM_PATH)) {
+        const identity = loadIdentityFromPath(DEFAULT_PEM_PATH);
+        const principal = identity.getPrincipal().toText();
+        ensureDaemonsBackground(DEFAULT_PEM_PATH, principal);
+      }
+    } catch {
+      // Silently ignore — daemon health check must never block the main command
+    }
+  }
 
   // Load and execute sub-script's run() function.
   // After compilation, __dirname points to dist/, sub-scripts are in the same directory.
