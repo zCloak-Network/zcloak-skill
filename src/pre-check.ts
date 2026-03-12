@@ -2,16 +2,16 @@
  * Pre-flight Update Check
  *
  * Runs before every CLI command to ensure the CLI package is up-to-date.
- * Since SKILL.md is bundled inside the npm package, updating the package
- * automatically updates SKILL.md — no separate GitHub fetch is needed.
+ * When a new npm version is available, we update both the npm package and the
+ * workspace SKILL.md together, then ask the caller to re-run.
  *
  * Flow:
  *   1. Read ~/.config/zcloak/.last-update-check timestamp
  *   2. If last check was < 15 minutes ago → skip (return immediately)
  *   3. If >= 15 minutes or file missing →
  *      a. Query npm registry for latest published version
- *      b. Compare with local package.json version
- *      c. If outdated → attempt `npm install -g @zcloak/ai-agent@latest`
+ *      b. Compare local package.json version against the registry version
+ *      c. If outdated → update npm package and workspace SKILL.md
  *      d. Write current timestamp to .last-update-check
  *
  * Design principles:
@@ -20,11 +20,12 @@
  *   - Timeout on npm commands (10s for version query, 60s for install)
  */
 
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import { execSync } from 'child_process';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import https from "https";
+import path from "path";
+import os from "os";
+import { execSync } from "child_process";
+import { fileURLToPath } from "url";
 
 // ---------------------------------------------------------------------------
 // Path constants
@@ -34,16 +35,24 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /** Package root directory (one level up from dist/) */
-const PACKAGE_ROOT = path.resolve(__dirname, '..');
+const PACKAGE_ROOT = path.resolve(__dirname, "..");
 
 /** Local package.json path */
-const LOCAL_PACKAGE_JSON = path.join(PACKAGE_ROOT, 'package.json');
+const LOCAL_PACKAGE_JSON = path.join(PACKAGE_ROOT, "package.json");
 
 /** Directory for zCloak configuration files */
-const CONFIG_DIR = path.join(os.homedir(), '.config', 'zcloak');
+const CONFIG_DIR = path.join(os.homedir(), ".config", "zcloak");
 
 /** Timestamp file recording when we last checked for updates */
-const CHECK_FILE = path.join(CONFIG_DIR, '.last-update-check');
+const CHECK_FILE = path.join(CONFIG_DIR, ".last-update-check");
+
+/** Workspace SKILL.md path expected by openClaw. */
+const WORKSPACE_SKILL_PATH = path.resolve(
+  process.cwd(),
+  "skills",
+  "zcloak-ai-agent",
+  "SKILL.md",
+);
 
 // ---------------------------------------------------------------------------
 // Tuning constants
@@ -59,7 +68,14 @@ const NPM_VIEW_TIMEOUT_MS = 10_000;
 const NPM_INSTALL_TIMEOUT_MS = 60_000;
 
 /** npm package name for version queries */
-const NPM_PACKAGE_NAME = '@zcloak/ai-agent';
+const NPM_PACKAGE_NAME = "@zcloak/ai-agent";
+
+/** Canonical remote SKILL.md URL */
+const SKILL_MD_URL =
+  "https://raw.githubusercontent.com/zCloak-Network/ai-agent/refs/heads/main/SKILL.md";
+
+/** Raw SKILL.md fetch timeout (milliseconds) */
+const SKILL_FETCH_TIMEOUT_MS = 10_000;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -83,7 +99,7 @@ export interface PreCheckResult {
  */
 function getLocalCliVersion(): string | null {
   try {
-    const pkg = JSON.parse(fs.readFileSync(LOCAL_PACKAGE_JSON, 'utf-8'));
+    const pkg = JSON.parse(fs.readFileSync(LOCAL_PACKAGE_JSON, "utf-8"));
     return pkg.version ?? null;
   } catch {
     return null;
@@ -105,7 +121,7 @@ function getLocalCliVersion(): string | null {
 function shouldCheck(): boolean {
   try {
     if (!fs.existsSync(CHECK_FILE)) return true;
-    const raw = fs.readFileSync(CHECK_FILE, 'utf-8').trim();
+    const raw = fs.readFileSync(CHECK_FILE, "utf-8").trim();
     const timestamp = parseInt(raw, 10);
     if (isNaN(timestamp)) return true;
     return Date.now() - timestamp >= CHECK_INTERVAL_MS;
@@ -121,7 +137,7 @@ function shouldCheck(): boolean {
 function recordCheckTime(): void {
   try {
     fs.mkdirSync(CONFIG_DIR, { recursive: true });
-    fs.writeFileSync(CHECK_FILE, String(Date.now()), 'utf-8');
+    fs.writeFileSync(CHECK_FILE, String(Date.now()), "utf-8");
   } catch {
     // Non-critical — silently ignore write failures
   }
@@ -140,9 +156,9 @@ function recordCheckTime(): void {
 function getNpmLatestVersion(): string | null {
   try {
     const output = execSync(`npm view ${NPM_PACKAGE_NAME} version`, {
-      stdio: 'pipe',
+      stdio: "pipe",
       timeout: NPM_VIEW_TIMEOUT_MS,
-      encoding: 'utf-8',
+      encoding: "utf-8",
     });
     return output.trim() || null;
   } catch {
@@ -157,15 +173,68 @@ function getNpmLatestVersion(): string | null {
  * node_modules directory (e.g. needs sudo). In that case we return false
  * and the caller will suggest a manual update command.
  */
-function updateCli(): boolean {
+function updateCli(): void {
   try {
     execSync(`npm install -g ${NPM_PACKAGE_NAME}@latest`, {
-      stdio: 'pipe',       // suppress npm output
+      stdio: "pipe", // suppress npm output
       timeout: NPM_INSTALL_TIMEOUT_MS,
     });
-    return true;
   } catch {
-    return false;
+    // Non-critical — the current command can still continue on older bits
+  }
+}
+
+/**
+ * Download a text file over HTTPS.
+ * Returns null on any network or timeout failure.
+ */
+function downloadText(url: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const req = https.get(url, (res) => {
+      if (res.statusCode !== 200) {
+        res.resume();
+        resolve(null);
+        return;
+      }
+
+      res.setEncoding("utf8");
+      let body = "";
+      res.on("data", (chunk) => {
+        body += chunk;
+      });
+      res.on("end", () => {
+        resolve(body);
+      });
+    });
+
+    req.setTimeout(SKILL_FETCH_TIMEOUT_MS, () => {
+      req.destroy();
+      resolve(null);
+    });
+
+    req.on("error", () => {
+      resolve(null);
+    });
+  });
+}
+
+/**
+ * Refresh the workspace SKILL.md from the canonical raw GitHub URL.
+ *
+ * Network failures or filesystem failures are silently ignored.
+ */
+async function updateSkill(): Promise<void> {
+  const remoteContent = await downloadText(SKILL_MD_URL);
+  if (!remoteContent) return;
+
+  try {
+    const targetDir = path.dirname(WORKSPACE_SKILL_PATH);
+    const tempPath = `${WORKSPACE_SKILL_PATH}.tmp`;
+    fs.mkdirSync(targetDir, { recursive: true });
+    fs.writeFileSync(tempPath, remoteContent, "utf-8");
+    fs.renameSync(tempPath, WORKSPACE_SKILL_PATH);
+  } catch {
+    // Non-critical — the current command can still continue on older bits
   }
 }
 
@@ -186,7 +255,7 @@ function updateCli(): boolean {
 export async function preCheck(): Promise<PreCheckResult> {
   // --- Gate: skip if last check was recent enough ---
   if (!shouldCheck()) {
-    return { updated: false, message: '' };
+    return { updated: false, message: "" };
   }
 
   // --- Read local version from package.json ---
@@ -194,42 +263,29 @@ export async function preCheck(): Promise<PreCheckResult> {
 
   // --- Query npm registry for latest version ---
   const remoteVersion = getNpmLatestVersion();
+  recordCheckTime();
 
-  // Query failed → network unreachable; record time and move on
+  // Query failed → network unreachable; move on
   if (!remoteVersion) {
-    recordCheckTime();
-    return { updated: false, message: '' };
+    return { updated: false, message: "" };
   }
 
   // --- Already up-to-date ---
   if (remoteVersion === localVersion) {
-    recordCheckTime();
-    return { updated: false, message: '' };
+    return { updated: false, message: "" };
   }
 
-  // --- Version mismatch → attempt auto-update ---
-  const updated = updateCli();
+  // --- Version mismatch → update both npm package and workspace SKILL.md ---
+  updateCli();
+  await updateSkill();
 
-  // Record the check time regardless of outcome
-  recordCheckTime();
-
-  if (updated) {
-    // Auto-update succeeded — caller should exit and re-run
-    return {
-      updated: true,
-      message: [
-        '[zcloak-ai] Version update detected!',
-        `[zcloak-ai] CLI: ${localVersion ?? 'unknown'} → ${remoteVersion} (updated)`,
-        '[zcloak-ai] Updates applied. Please re-read the SKILL.md file and re-execute the command.',
-      ].join('\n'),
-    };
-  }
-
-  // Auto-update failed — inform user but don't block command execution
-  // (updated remains false so the caller continues normally)
-  console.error(
-    `[zcloak-ai] CLI update available: ${localVersion ?? 'unknown'} → ${remoteVersion}` +
-    ` (run: npm install -g ${NPM_PACKAGE_NAME}@latest)`,
-  );
-  return { updated: false, message: '' };
+  return {
+    updated: true,
+    message: [
+      "[zcloak-ai] Version update detected!",
+      `[zcloak-ai] CLI: ${localVersion ?? "unknown"} → ${remoteVersion} (updated)`,
+      `[zcloak-ai] Workspace SKILL.md target: ${WORKSPACE_SKILL_PATH}`,
+      `[zcloak-ai] You must reload the updated ${WORKSPACE_SKILL_PATH}/SKILL.md since it changed and re-run the previous command since package also updated.`,
+    ].join("\n"),
+  };
 }
