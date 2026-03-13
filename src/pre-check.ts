@@ -26,6 +26,7 @@ import path from "path";
 import os from "os";
 import { execSync } from "child_process";
 import { fileURLToPath } from "url";
+import { debug } from "./log.js";
 
 // ---------------------------------------------------------------------------
 // Path constants
@@ -100,8 +101,11 @@ export interface PreCheckResult {
 function getLocalCliVersion(): string | null {
   try {
     const pkg = JSON.parse(fs.readFileSync(LOCAL_PACKAGE_JSON, "utf-8"));
-    return pkg.version ?? null;
+    const version = pkg.version ?? null;
+    debug("pre-check local CLI version =", version ?? "null");
+    return version;
   } catch {
+    debug("pre-check failed to read local package version from", LOCAL_PACKAGE_JSON);
     return null;
   }
 }
@@ -124,8 +128,15 @@ function shouldCheck(): boolean {
     const raw = fs.readFileSync(CHECK_FILE, "utf-8").trim();
     const timestamp = parseInt(raw, 10);
     if (isNaN(timestamp)) return true;
-    return Date.now() - timestamp >= CHECK_INTERVAL_MS;
+    const delta = Date.now() - timestamp;
+    const should = delta >= CHECK_INTERVAL_MS;
+    debug(
+      "pre-check timestamp read",
+      { file: CHECK_FILE, timestamp, deltaMs: delta, intervalMs: CHECK_INTERVAL_MS, shouldCheck: should },
+    );
+    return should;
   } catch {
+    debug("pre-check timestamp read failed, forcing check");
     return true;
   }
 }
@@ -138,8 +149,10 @@ function recordCheckTime(): void {
   try {
     fs.mkdirSync(CONFIG_DIR, { recursive: true });
     fs.writeFileSync(CHECK_FILE, String(Date.now()), "utf-8");
+    debug("pre-check timestamp recorded", CHECK_FILE);
   } catch {
     // Non-critical — silently ignore write failures
+    debug("pre-check failed to record timestamp", CHECK_FILE);
   }
 }
 
@@ -155,13 +168,17 @@ function recordCheckTime(): void {
  */
 function getNpmLatestVersion(): string | null {
   try {
+    debug("pre-check querying npm latest version for", NPM_PACKAGE_NAME);
     const output = execSync(`npm view ${NPM_PACKAGE_NAME} version`, {
       stdio: "pipe",
       timeout: NPM_VIEW_TIMEOUT_MS,
       encoding: "utf-8",
     });
-    return output.trim() || null;
+    const version = output.trim() || null;
+    debug("pre-check npm latest version =", version ?? "null");
+    return version;
   } catch {
+    debug("pre-check npm version query failed");
     return null;
   }
 }
@@ -175,12 +192,15 @@ function getNpmLatestVersion(): string | null {
  */
 function updateCli(): void {
   try {
+    debug("pre-check updating npm package", NPM_PACKAGE_NAME);
     execSync(`npm install -g ${NPM_PACKAGE_NAME}@latest`, {
       stdio: "pipe", // suppress npm output
       timeout: NPM_INSTALL_TIMEOUT_MS,
     });
+    debug("pre-check npm package update completed", NPM_PACKAGE_NAME);
   } catch {
     // Non-critical — the current command can still continue on older bits
+    debug("pre-check npm package update failed", NPM_PACKAGE_NAME);
   }
 }
 
@@ -224,17 +244,24 @@ function downloadText(url: string): Promise<string | null> {
  * Network failures or filesystem failures are silently ignored.
  */
 async function updateSkill(): Promise<void> {
+  debug("pre-check refreshing workspace SKILL.md from", SKILL_MD_URL);
   const remoteContent = await downloadText(SKILL_MD_URL);
-  if (!remoteContent) return;
+  if (!remoteContent) {
+    debug("pre-check SKILL.md download returned empty");
+    return;
+  }
 
   try {
     const targetDir = path.dirname(WORKSPACE_SKILL_PATH);
     const tempPath = `${WORKSPACE_SKILL_PATH}.tmp`;
+    debug("pre-check writing workspace SKILL.md", { target: WORKSPACE_SKILL_PATH, temp: tempPath });
     fs.mkdirSync(targetDir, { recursive: true });
     fs.writeFileSync(tempPath, remoteContent, "utf-8");
     fs.renameSync(tempPath, WORKSPACE_SKILL_PATH);
+    debug("pre-check workspace SKILL.md refreshed", WORKSPACE_SKILL_PATH);
   } catch {
     // Non-critical — the current command can still continue on older bits
+    debug("pre-check workspace SKILL.md refresh failed", WORKSPACE_SKILL_PATH);
   }
 }
 
@@ -255,6 +282,7 @@ async function updateSkill(): Promise<void> {
 export async function preCheck(): Promise<PreCheckResult> {
   // --- Gate: skip if last check was recent enough ---
   if (!shouldCheck()) {
+    debug("pre-check skipped because interval not reached");
     return { updated: false, message: "" };
   }
 
@@ -266,17 +294,20 @@ export async function preCheck(): Promise<PreCheckResult> {
 
   // Query failed → network unreachable; move on
   if (!remoteVersion) {
+    debug("pre-check remote version unavailable, skipping update flow");
     recordCheckTime();
     return { updated: false, message: "" };
   }
 
   // --- Already up-to-date ---
   if (remoteVersion === localVersion) {
+    debug("pre-check found CLI already up-to-date", remoteVersion);
     recordCheckTime();
     return { updated: false, message: "" };
   }
 
   // --- Version mismatch → update both npm package and workspace SKILL.md ---
+  debug("pre-check update required", { localVersion, remoteVersion, skillPath: WORKSPACE_SKILL_PATH });
   updateCli();
   await updateSkill();
   recordCheckTime();
